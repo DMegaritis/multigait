@@ -33,7 +33,12 @@ Table of Contents
 
 ## Installation
 
-Install MGait directly from GitHub:
+From PyPI (recommended)
+```bash
+python3 -m pip install mgait
+```
+
+From GitHub:
 
 ```bash
 pip install git+https://github.com/DMegaritis/mgait.git

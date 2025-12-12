@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "multigait"
-version = "0.1.0"
+version = "0.2.0"
 description = "MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices"
 authors = ["DMegaritis <d.megaritis@northumbria.ac.uk>"]
 readme = "README.md"

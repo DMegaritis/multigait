@@ -5,7 +5,7 @@
 [![DOI](https://zenodo.org/badge/1114654142.svg)](https://doi.org/10.5281/zenodo.17903929)
 
 
-MGait (Multimorbidity Gait) is a Python implementation of a gait analysis pipeline for real-world assessment, primarily developed for wrist-worn inertial measurement units (IMUs). This pipeline integrates signal-processing algorithms for gait detection, initial contact detection, and stride-length estimation, providing a streamlined workflow for mobility research in people with multiple long-term conditions (multimorbidity). While the pipeline is wrist-focused, fine-tuned versions for lower-back devices are also provided for use in custom workflows.
+MGait (Multimorbidity Gait) is a Python implementation of a gait analysis pipeline for real-world assessment, primarily developed for wrist-worn inertial measurement units (IMUs). This pipeline integrates signal-processing algorithms for gait detection, initial contact detection, stride-length estimation, cadence, and walking speed providing a streamlined workflow for mobility research in people with multiple long-term conditions (multimorbidity). While the pipeline is wrist-focused, fine-tuned versions for lower-back devices are also provided for use in custom workflows.
 
 The individual algorithms included in this library have been developed and validated in multimorbidity cohorts [1]. However, the full integration of these algorithms into a complete pipeline has not yet been formally evaluated, so we do not currently recommend any specific pipeline configuration. In future releases, we plan to systematically assess combinations of algorithms and provide recommended pipelines tailored to different multimorbidity clusters.
 

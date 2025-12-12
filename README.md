@@ -1,11 +1,11 @@
-# MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices
+# MGait: Real-World Gait Pipeline for Wrist-Worn Devices
 
 [![PyPI version](https://img.shields.io/pypi/v/mgait.svg)](https://pypi.org/project/mgait/)
 
 [![DOI](https://zenodo.org/badge/1114654142.svg)](https://doi.org/10.5281/zenodo.17903929)
 
 
-MultiGait (Multimorbidity Gait) is a Python implementation of a gait analysis pipeline for real-world assessment, primarily developed for wrist-worn inertial measurement units (IMUs). This pipeline integrates signal-processing algorithms for gait detection, initial contact detection, and stride-length estimation, providing a streamlined workflow for mobility research in people with multiple long-term conditions (multimorbidity). While the pipeline is wrist-focused, fine-tuned versions for lower-back devices are also provided for use in custom workflows.
+MGait (Multimorbidity Gait) is a Python implementation of a gait analysis pipeline for real-world assessment, primarily developed for wrist-worn inertial measurement units (IMUs). This pipeline integrates signal-processing algorithms for gait detection, initial contact detection, stride-length estimation, cadence, and walking speed providing a streamlined workflow for mobility research in people with multiple long-term conditions (multimorbidity). While the pipeline is wrist-focused, fine-tuned versions for lower-back devices are also provided for use in custom workflows.
 
 The individual algorithms included in this library have been developed and validated in multimorbidity cohorts [1]. However, the full integration of these algorithms into a complete pipeline has not yet been formally evaluated, so we do not currently recommend any specific pipeline configuration. In future releases, we plan to systematically assess combinations of algorithms and provide recommended pipelines tailored to different multimorbidity clusters.
 
@@ -15,7 +15,7 @@ Planned future releases include:
 - Validated wear-time detection algorithms.
 
 Note on biomechanical definitions
-: The biomechanical logic and gait event definitions implemented in MultiGait are based on the specifications defined within Mobilise-D.
+: The biomechanical logic and gait event definitions implemented in MGait are based on the specifications defined within Mobilise-D.
 
 ---
 
@@ -35,20 +35,20 @@ Table of Contents
 
 From PyPI (recommended)
 ```bash
-python3 -m pip install multigait
+python3 -m pip install mgait
 ```
 
 From GitHub:
 
 ```bash
-pip install git+https://github.com/DMegaritis/multigait.git
+pip install git+https://github.com/DMegaritis/mgait.git
 ```
 
 Or clone the repository and install locally:
 
 ```bash
-git clone https://github.com/DMegaritis/multigait.git
-cd multigait
+git clone https://github.com/DMegaritis/mgait.git
+cd mgait
 pip install .
 ```
 
@@ -63,9 +63,9 @@ The package is designed to be used in two main modes:
 High-level pipelines allow loading raw IMU data and obtaining gait outcomes end-to-end. Example:
 
 ```python
-from multigait.pipeline.multigait_pipeline import MultiGaitPipelineSuggested
+from mgait.pipeline.mgait_pipeline import MGaitPipelineSuggested
 
-pipeline = MultiGaitPipelineSuggested()
+pipeline = MGaitPipelineSuggested()
 pipeline.safe_run(long_trial)
 ```
 
@@ -86,12 +86,12 @@ For usage examples and input/output formats, see the examples in this repository
 
 ## Citation
 
-If you use MultiGait in your research, please cite:
+If you use MGait in your research, please cite:
 
 ```bibtex
 @software{megaritis2025wristmobility,
   author    = {Megaritis, Dimitrios and Alcock, Lisa and Scott, Kirsty and Hiden, Hugo and Cereatti, Andrea and Vogiatzis, Ioannis and Del Din, Silvia},
-  title     = {MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices for Multimorbid Populations},
+  title     = {MGait: Real-World Gait Pipeline for Wrist-Worn Devices for Multimorbid Populations},
   year      = {2025},
   publisher = {Zenodo},
   doi       = {https://doi.org/10.5281/zenodo.17903930},
@@ -112,7 +112,7 @@ This work was supported by the Medical Research Council (MRC) Gap Fund award (UK
 
 ## License
 
-The MultiGait library is licensed under the Apache License 2.0. It is free to use for any purpose, including commercial use, but all distributions must include the license text.
+The MGait library is licensed under the Apache License 2.0. It is free to use for any purpose, including commercial use, but all distributions must include the license text.
 
 
 <img width="200" height="200" alt="Northumbria_University_Logo" src="https://github.com/user-attachments/assets/4572c9f6-ad7e-4d8b-a398-5bae0547666f" />

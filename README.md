@@ -81,6 +81,8 @@ You can also use individual algorithms separately to build custom workflows. Exa
 - Gait Sequence Detection (GSD)
 - Initial Contact Detection (ICD)
 - Stride Length Estimation (SL)
+- Cadence (CAD; requires prior GSD and ICD)
+- Walking Speed (Ws; requires prior GSD, CAD, and SL)
 
 For usage examples and input/output formats, see the examples in this repository or in DMegaritis/multimobility_wrist.
 

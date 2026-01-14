@@ -86,6 +86,57 @@ You can also use individual algorithms separately to build custom workflows. Exa
 
 For usage examples and input/output formats, see the examples in this repository or in DMegaritis/multimobility_wrist.
 
+### Digital Mobility Outcomes (DMOs)
+
+The following table summarizes all Digital Mobility Outcomes (DMOs) extracted by MultiGait, including walking bout types and the statistics calculated:
+
+| Walking Bout   | DMO                                               | Statistic/Measure |
+|----------------|---------------------------------------------------|-----------------|
+| All WBs        | Number of walking bouts                           | Sum             |
+| All WBs        | Total Walking Duration (min)                      | Sum             |
+| All WBs        | Initial Contacts (n_raw)                          | Sum             |
+| All WBs        | WB Duration (s)                                   | Mean            |
+| All WBs        | Max WB Duration (s)                               | 90th percentile |
+| All WBs        | WB Duration bout to bout variability (s)         | CV              |
+| All WBs        | Cadence (steps/min)                               | Mean            |
+| All WBs        | Stride Duration (s)                               | Mean            |
+| All WBs        | Cadence bout to bout variability (steps/min)     | CV              |
+| All WBs        | Stride Duration bout to bout variability (s)     | CV              |
+| All WBs        | Cadence within bout variability (CV)             | Mean            |
+| All WBs        | Stride Duration within bout variability (CV)     | Mean            |
+| All WBs        | Cadence within bout variability (RMSSD)          | Mean            |
+| All WBs        | Stride Duration within bout variability (RMSSD)  | Mean            |
+| 10–30s WBs     | Number of walking bouts                           | Sum             |
+| 10–30s WBs     | Walking Speed (m/s)                               | Mean            |
+| 10–30s WBs     | Stride Length (m)                                 | Mean            |
+| 10–30s WBs     | Walking Speed within bout variability (CV) (m/s) | Mean            |
+| 10–30s WBs     | Stride Length within bout variability (CV) (m)   | Mean            |
+| 10–30s WBs     | Walking Speed within bout variability (RMSSD) (m/s) | Mean          |
+| 10–30s WBs     | Stride Length within bout variability (RMSSD) (m) | Mean           |
+| >10s WBs       | Number of walking bouts                           | Sum             |
+| >10s WBs       | Max Walking Speed (m/s)                           | 90th percentile |
+| >30s WBs       | Number of walking bouts                           | Sum             |
+| >30s WBs       | Walking Speed (m/s)                               | Mean            |
+| >30s WBs       | Stride Length (m)                                 | Mean            |
+| >30s WBs       | Cadence (steps/min)                               | Mean            |
+| >30s WBs       | Stride Duration (s)                               | Mean            |
+| >30s WBs       | Max Walking Speed (m/s)                           | 90th percentile |
+| >30s WBs       | Max Cadence (steps/min)                            | 90th percentile |
+| >30s WBs       | Walking Speed bout to bout variability (m/s)     | CV              |
+| >30s WBs       | Stride Length bout to bout variability (m)       | CV              |
+| >30s WBs       | Cadence within bout variability (CV) (steps/min) | Mean            |
+| >30s WBs       | Stride Duration within bout variability (CV) (s) | Mean            |
+| >30s WBs       | Walking Speed within bout variability (CV) (m/s) | Mean            |
+| >30s WBs       | Stride Length within bout variability (CV) (m)   | Mean            |
+| >30s WBs       | Cadence within bout variability (RMSSD) (steps/min) | Mean         |
+| >30s WBs       | Stride Duration within bout variability (RMSSD) (s) | Mean         |
+| >30s WBs       | Walking Speed within bout variability (RMSSD) (m/s) | Mean         |
+| >30s WBs       | Stride Length within bout variability (RMSSD) (m) | Mean           |
+| >60s WBs       | Number of walking bouts                           | Sum             |
+| All WBs        | Alpha                                             | -               |
+
+*CV: Coefficient of Variation; RMSSD: Root Mean Square of Successive Differences*
+
 ---
 
 ## Citation

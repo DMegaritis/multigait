@@ -393,7 +393,7 @@ class MicoAmigoIC(BaseIcDetector):
         steps = np.diff(hs)
 
         # adjusting last peak if last step is smaller than 0.6 * templatesize
-        if steps[-1] < np.floor(0.6 * templatesize):
+        if len(steps) > 0 and steps[-1] < np.floor(0.6 * templatesize):
             hs = hs[:-1]
 
 

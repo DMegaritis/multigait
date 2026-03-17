@@ -362,10 +362,15 @@ class MultimobilityPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         if self.dmo_thresholds is None:
             self.per_wb_parameter_mask_ = None
         else:
+            height_m = datapoint.participant_metadata.get("height_m")
+            if height_m is None:
+                height_m = 1.65
+                print(f" Warning: height_m not provided for {datapoint.participant_id}, using default value of 1.65m")
+
             self.per_wb_parameter_mask_ = apply_thresholds(
                 self.per_wb_parameters_,
                 self.dmo_thresholds,
-                height_m=datapoint.participant_metadata["height_m"],
+                height_m=height_m,
             )
 
         if self.dmo_aggregation is None:

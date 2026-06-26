@@ -4,10 +4,10 @@ import pandas as pd
 from typing_extensions import Self, Unpack
 from typing import Literal, Any
 from mobgap.data_transform import chain_transformers, ButterworthFilter
-from src.multigait.SL.utils.SL_utils import moving_average_filter_bylemans
-from src.multigait.SL.base_sl import BaseSlDetector
-from src.multigait.utils.data_conversions import seconds_to_samples
-from src.multigait.utils.interp import interpolate_step_metric
+from multigait.SL.utils.SL_utils import moving_average_filter_bylemans
+from multigait.SL.base_sl import BaseSlDetector
+from multigait.utils.data_conversions import seconds_to_samples
+from multigait.utils.interp import interpolate_step_metric
 
 
 class BylemansSL(BaseSlDetector):

@@ -1,4 +1,4 @@
-from src.multigait import ZijlstraIC
+from multigait.ICD import ZijlstraIC
 from src.multigait import load_imu_data_lowback
 
 """

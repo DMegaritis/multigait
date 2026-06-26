@@ -1,4 +1,4 @@
-from src.multigait import PhamIC
+from multigait.ICD import PhamIC
 from src.multigait import load_imu_data_lowback
 
 """

@@ -4,9 +4,9 @@ import pandas as pd
 from typing import Literal, Any
 from typing_extensions import Self, Unpack
 from mobgap.data_transform import chain_transformers, ButterworthFilter
-from src.multigait.SL.base_sl import BaseSlDetector
-from src.multigait.utils.data_conversions import seconds_to_samples
-from src.multigait.utils.interp import interpolate_step_metric
+from multigait.SL.base_sl import BaseSlDetector
+from multigait.utils.data_conversions import seconds_to_samples
+from multigait.utils.interp import interpolate_step_metric
 
 
 class WeinbergSL(BaseSlDetector):

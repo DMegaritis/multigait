@@ -9,16 +9,16 @@ from typing_extensions import Self
 # Multimobility imports
 from multigait.CAD.cad import Cadence
 from src.multigait.CAD.base_cad import BaseCadDetector
-from src.multigait.GSD.GSD3 import KheirkhahanGSD
-from src.multigait.GSD.GSD1 import IonescuGSD
+from multigait.GSD import KheirkhahanGSD
+from multigait.GSD import IonescuGSD
 from src.multigait.GSD.base_gsd import BaseGsdDetector
 from multigait.ICD import PhamIC
-from src.multigait.ICD.ICD6 import GuIC
+from multigait.ICD import GuIC
 from multigait.ICD import McCamleyIC
 from src.multigait.ICD.base_ic import BaseIcDetector
-from src.multigait.SL.SL1 import WeinbergSL
+from multigait.SL import WeinbergSL
 from src.multigait.SL.base_sl import BaseSlDetector
-from src.multigait.WS.walking_speed import Ws
+from multigait.WS import Ws
 from multigait.WS import BaseWsDetector
 
 # Multimobility function imports

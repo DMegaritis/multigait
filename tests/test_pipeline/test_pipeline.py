@@ -3,14 +3,14 @@ import pandas as pd
 import numpy as np
 
 from multigait.GSD import KheirkhahanGSD
-from src.multigait.pipeline.multimobility_pipeline import (
+from multigait.pipeline import (
     MultiGaitPipeline,
     MultiGaitPipelineHealthyCoMorbidity,
     MultiGaitPipelineMultimorbidityImpaired,
 )
 from multigait.CAD.cad import Cadence
-from src.multigait.ICD.ICD6 import GuIC
-from src.multigait import ZijlstraIC
+from multigait.ICD import GuIC
+from multigait.ICD import ZijlstraIC
 from multigait.SL import WeinbergSL
 from multigait.WS import Ws
 from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
@@ -195,7 +195,7 @@ class TestFullMultiGaitPipeline:
         from examples.example_data.example_constructor import (
             construct_datapoint_from_files,
         )
-        from src.multigait import rename_axes_to_body
+        from multigait.utils.data_conversions import rename_axes_to_body
         from multigait.SL import WeinbergSL
 
         real_data = construct_datapoint_from_files()

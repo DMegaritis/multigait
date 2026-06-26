@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from src.multigait import DucharmeIC
+from multigait.ICD import DucharmeIC
 
 
 class TestDucharmeIC:

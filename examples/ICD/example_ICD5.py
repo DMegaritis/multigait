@@ -1,4 +1,4 @@
-from src.multigait import DucharmeIC
+from multigait.ICD import DucharmeIC
 from src.multigait import load_imu_data_lowback
 
 """

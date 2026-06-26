@@ -72,7 +72,7 @@ pipeline.aggregated_parameters_
 # Running the preliminary suggested pipeline separately.
 # For this, we do not need to specify the algorithms to be used.
 
-from src.multigait.pipeline.multimobility_pipeline import (
+from multigait.pipeline import (
     MultiGaitPipelineMultimorbidityImpaired,
 )
 

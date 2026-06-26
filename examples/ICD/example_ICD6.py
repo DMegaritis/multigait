@@ -1,4 +1,4 @@
-from src.multigait.ICD.ICD6 import GuIC
+from multigait.ICD import GuIC
 from src.multigait import load_imu_data_wrist
 
 """

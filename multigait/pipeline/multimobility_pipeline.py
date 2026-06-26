@@ -185,7 +185,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     _all_action_kwargs: dict[str, Any]
 
     class PredefinedParameters:
-        preliminary_multimobility: Final = MappingProxyType(
+        healthy_comobility: Final = MappingProxyType(
             {
                 "gait_sequence_detection": KheirkhahanGSD(),
                 "initial_contact_detection": McCamleyIC(),
@@ -533,12 +533,13 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             axis=1,
         )
 
-class MultiGaitPipelineSuggested(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
-    """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in [1].
+class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
+    """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in a healthier comorbid sample tested in [1].
 
     This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
     (see PredefinedParameters.preliminary_multimobility) that reflect the configuration
-    reported to perform well in our evaluations.
+    reported to perform best in a healthier comorbid subsample of the study population
+    described in [1].
 
     The constructor accepts the same parameters as MultiGaitPipeline, but default values
     are applied via the set_defaults decorator so users can instantiate it without specifying
@@ -549,7 +550,7 @@ class MultiGaitPipelineSuggested(MultiGaitPipeline[GaitDatasetT], Generic[GaitDa
     Bioengineering (Basel). 2025 Oct 15;12(10):1108. doi: 10.3390/bioengineering12101108. PMID: 41155107; PMCID: PMC12561645.
     """
 
-    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.preliminary_multimobility.items()})
+    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.healthy_comobility.items()})
     def __init__(
         self,
         *,

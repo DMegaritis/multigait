@@ -159,6 +159,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
     gait_sequence_detection: BaseGsdDetector
     initial_contact_detection: BaseIcDetector
+    initial_contact_detection_sl: BaseIcDetector
     cadence_calculation: Optional[BaseCadDetector]
     stride_length_calculation: Optional[BaseSlDetector]
     walking_speed_calculation: Optional[BaseWsDetector]
@@ -189,6 +190,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             {
                 "gait_sequence_detection": KheirkhahanGSD(),
                 "initial_contact_detection": McCamleyIC(),
+                "initial_contact_detection_sl": McCamleyIC(),
                 "cadence_calculation": Cadence(),
                 "stride_length_calculation": WeinbergSL(),
                 "walking_speed_calculation": Ws(),
@@ -205,6 +207,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         *,
         gait_sequence_detection: BaseGsdDetector,
         initial_contact_detection: BaseIcDetector,
+        initial_contact_detection_sl: BaseIcDetector,
         cadence_calculation: Optional[BaseCadDetector],
         stride_length_calculation: Optional[BaseSlDetector],
         walking_speed_calculation: Optional[BaseWsDetector],
@@ -215,6 +218,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     ) -> None:
         self.gait_sequence_detection = gait_sequence_detection
         self.initial_contact_detection = initial_contact_detection
+        self.initial_contact_detection_sl = initial_contact_detection_sl
         self.cadence_calculation = cadence_calculation
         self.stride_length_calculation = stride_length_calculation
         self.walking_speed_calculation = walking_speed_calculation
@@ -418,6 +422,8 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             icd = self.initial_contact_detection.clone().detect(gs_data)
             r.ic_list = icd.ic_list_
 
+            icd_sl = self.initial_contact_detection_sl.clone().detect(gs_data)
+
             cad_r = None
             if self.cadence_calculation:
                 cad = self.cadence_calculation.clone().calculate(
@@ -430,7 +436,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             sl_r = None
             if self.stride_length_calculation:
                 sl = self.stride_length_calculation.clone().calculate(
-                    gs_data, initial_contacts=icd.ic_list_,
+                    gs_data, initial_contacts=icd_sl.ic_list_,
                     **self._all_action_kwargs
                 )
                 sl_r = sl.stride_length_per_sec_
@@ -556,6 +562,7 @@ class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Gener
         *,
         gait_sequence_detection: BaseGsdDetector,
         initial_contact_detection: BaseIcDetector,
+        initial_contact_detection_sl: BaseIcDetector,
         cadence_calculation: Optional[BaseCadDetector],
         stride_length_calculation: Optional[BaseSlDetector],
         walking_speed_calculation: Optional[BaseWsDetector],
@@ -567,6 +574,7 @@ class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Gener
         super().__init__(
             gait_sequence_detection=gait_sequence_detection,
             initial_contact_detection=initial_contact_detection,
+            initial_contact_detection_sl=initial_contact_detection_sl,
             cadence_calculation=cadence_calculation,
             stride_length_calculation=stride_length_calculation,
             walking_speed_calculation=walking_speed_calculation,

@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 import numpy as np
-from multigait.pipeline.multimobility_pipeline import MultimobilityPipeline
+from multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
 from multigait.CAD.cad import Cadence
 from multigait.GSD.GSD2 import HickeyGSD
 from multigait.ICD.ICD2 import McCamleyIC
@@ -51,9 +51,9 @@ def example_pipeline_algorithms():
     )
 
 
-class TestFullMultimobilityPipeline:
+class TestFullMultiGaitPipeline:
     def test_full_pipeline_run(self, example_datapoint, example_pipeline_algorithms):
-        pipeline = MultimobilityPipeline(**example_pipeline_algorithms)
+        pipeline = MultiGaitPipeline(**example_pipeline_algorithms)
         result = pipeline.run(example_datapoint)
 
         # Basic assertions on output structure

@@ -33,9 +33,9 @@ wba = WbAssembly()
 thresholds = get_thresholds()
 agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 
-from multigait.pipeline.multimobility_pipeline import MultimobilityPipeline
+from multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
 
-pipeline = MultimobilityPipeline(
+pipeline = MultiGaitPipeline(
     gait_sequence_detection=gsd,
     initial_contact_detection=icd,
     cadence_calculation=cad,
@@ -68,9 +68,9 @@ pipeline.aggregated_parameters_
 # Running the preliminary suggested pipeline separately.
 # For this, we do not need to specify the algorithms to be used.
 
-from multigait.pipeline.multimobility_pipeline import MultimobilityPipelineSuggested
+from multigait.pipeline.multimobility_pipeline import MultiGaitPipelineSuggested
 
-pipeline = MultimobilityPipelineSuggested(
+pipeline = MultiGaitPipelineSuggested(
 )
 
 pipeline.safe_run(data)

@@ -48,7 +48,7 @@ VAR_DMO_COLUMNS = [
     "walking_speed_mps_rmssd",
 ]
 
-class MultimobilityPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
+class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     """
     Multimobility pipeline for wrist-worn devices. This pipeline is based on the MobGap pipeline
     structure and is designed to process raw IMU data to compute stride- and walking-bout-level
@@ -142,7 +142,7 @@ class MultimobilityPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
     Examples
     --------
-    >>> pipeline = MultimobilityPipeline(
+    >>> pipeline = MultiGaitPipeline(
     >>>     gait_sequence_detection=GSDAlgorithm(),
     >>>     initial_contact_detection=ICAlgorithm(),
     >>>     cadence_calculation=CadenceAlgorithm(),
@@ -533,14 +533,14 @@ class MultimobilityPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             axis=1,
         )
 
-class MultimobilityPipelineSuggested(MultimobilityPipeline[GaitDatasetT], Generic[GaitDatasetT]):
+class MultiGaitPipelineSuggested(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
     """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in [1].
 
-    This subclass wraps MultimobilityPipeline and provides a set of predefined algorithm instances
+    This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
     (see PredefinedParameters.preliminary_multimobility) that reflect the configuration
     reported to perform well in our evaluations.
 
-    The constructor accepts the same parameters as MultimobilityPipeline, but default values
+    The constructor accepts the same parameters as MultiGaitPipeline, but default values
     are applied via the set_defaults decorator so users can instantiate it without specifying
     every argument.
 
@@ -549,7 +549,7 @@ class MultimobilityPipelineSuggested(MultimobilityPipeline[GaitDatasetT], Generi
     Bioengineering (Basel). 2025 Oct 15;12(10):1108. doi: 10.3390/bioengineering12101108. PMID: 41155107; PMCID: PMC12561645.
     """
 
-    @set_defaults(**{k: cf(v) for k, v in MultimobilityPipeline.PredefinedParameters.preliminary_multimobility.items()})
+    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.preliminary_multimobility.items()})
     def __init__(
         self,
         *,

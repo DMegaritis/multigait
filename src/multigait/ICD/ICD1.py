@@ -183,16 +183,16 @@ class MicoAmigoIC(BaseIcDetector):
         )
 
         # Fourier Transform
-        l = len(possitive_detrend_high)
+        signal_length = len(possitive_detrend_high)
         # next power of 2 from length
-        nfft = 2 ** int(np.ceil(np.log2(l)))
+        nfft = 2 ** int(np.ceil(np.log2(signal_length)))
         # Fourier
 
         # Detrending for better performance
         # If I do not detrend in python the peak happens at 0
         detrended_signal = possitive_detrend_high - np.mean(possitive_detrend_high)
 
-        y = np.fft.fft(detrended_signal, nfft) / l
+        y = np.fft.fft(detrended_signal, nfft) / signal_length
 
         # Frequencies
         f = self._sampling_rate_hz / 2 * np.linspace(0, 1, nfft // 2 + 1)

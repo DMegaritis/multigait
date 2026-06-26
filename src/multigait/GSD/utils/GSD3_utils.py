@@ -134,7 +134,7 @@ def generate_gs_list(detected_walking: np.ndarray, sampling_rate=1):
     wb_list = [
         (int(c / sampling_rate), int((c + len(wb)) / sampling_rate))
         for c, wb in zip([0] + list(cuts), wbs)
-        if wb[0] == True
+        if wb[0]
     ]
 
     # Create a DataFrame from the list of tuples

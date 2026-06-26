@@ -11,7 +11,6 @@ from multigait.CAD.cad import Cadence
 from multigait.CAD.base_cad import BaseCadDetector
 from multigait.GSD import KheirkhahanGSD, IonescuGSD, BaseGsdDetector
 from multigait.ICD import McCamleyIC, ZijlstraIC, GuIC, BaseIcDetector
-from multigait.ICD.base_ic import BaseIcDetector
 from multigait.SL import WeinbergSL
 from multigait.SL.base_sl import BaseSlDetector
 from multigait.WS import Ws

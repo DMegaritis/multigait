@@ -3,7 +3,7 @@
 from typing import Optional, Union
 import pandas as pd
 from typing_extensions import Literal
-from src.multigait.pipeline.wba_base import BaseWbRule
+from multigait.pipeline.wba_base import BaseWbRule
 
 
 class StridesCriteria(BaseWbRule):

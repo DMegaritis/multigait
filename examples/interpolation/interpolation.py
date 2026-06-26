@@ -1,8 +1,8 @@
 """In this example we use very short data to show the interpolation."""
 
 from multigait.interpolation_ts import Interpolation
-from src.multigait import plot_interp
-from src.multigait import (
+from multigait.utils.ploter import plot_interp
+from multigait.utils.data_loader import (
     load_imu_data_interpolation_lowback,
     load_imu_data_interpolation_wrist,
 )

@@ -8,7 +8,7 @@ from pandas import option_context
 from tpcp import cf
 from tpcp.misc import set_defaults
 from typing_extensions import Self, Unpack
-from multigait.aggregation import AggregatorBase
+from multigait.aggregation._aggregator_base import AggregatorBase
 
 
 def _custom_quantile(x: pd.Series) -> float:

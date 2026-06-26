@@ -1,5 +1,5 @@
-from multigait.CAD.cad import Cadence, CadenceSimple
-from src.multigait import load_imu_data_wrist, load_ICs_wrist
+from multigait.CAD import Cadence
+from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
 
 
 imu_data = load_imu_data_wrist()

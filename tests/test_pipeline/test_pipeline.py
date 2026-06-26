@@ -13,10 +13,10 @@ from multigait.ICD import GuIC
 from multigait.ICD import ZijlstraIC
 from multigait.SL import WeinbergSL
 from multigait.WS import Ws
-from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
-from src.multigait.pipeline.utils._wb_assembly import WbAssembly
+from multigait.pipeline.utils._stride_filtering import StrideFiltering
+from multigait.pipeline.utils._wb_assembly import WbAssembly
 from multigait.aggregation import GenericAggregator
-from src.multigait.pipeline.utils._thresholds import get_thresholds
+from multigait.pipeline.utils._thresholds import get_thresholds
 from unittest.mock import patch
 
 

@@ -10,8 +10,8 @@ from mobgap.data_transform import (
     CwtFilter,
     Resample,
 )
-from src.multigait.ICD.utils.dominant_frequency import dominant_freqency
-from src.multigait.ICD.base_ic import BaseIcDetector
+from multigait.ICD.utils.dominant_frequency import dominant_freqency
+from multigait.ICD.base_ic import BaseIcDetector
 
 
 class PhamIC(BaseIcDetector):

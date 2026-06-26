@@ -1,6 +1,6 @@
 import warnings
 from typing import Any
-from src.multigait.GSD.utils.GSD1_utils import (
+from multigait.GSD.utils.GSD1_utils import (
     find_pulse_trains,
     find_intersections,
     find_active_period_peak_threshold,
@@ -8,8 +8,8 @@ from src.multigait.GSD.utils.GSD1_utils import (
     format_gait_sequences,
     combine_intervals,
 )
-from src.multigait.utils.data_conversions import seconds_to_samples
-from src.multigait.GSD.base_gsd import BaseGsdDetector
+from multigait.utils.data_conversions import seconds_to_samples
+from multigait.GSD.base_gsd import BaseGsdDetector
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks

@@ -4,7 +4,7 @@ import numpy as np
 from intervaltree import IntervalTree
 from numba import njit
 from scipy.signal import find_peaks, hilbert
-from src.multigait.utils.array import (
+from multigait.utils.array import (
     merge_interval,
     bool_array_to_start_end,
     start_end_array_to_bool,

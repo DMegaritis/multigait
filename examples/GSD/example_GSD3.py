@@ -1,4 +1,4 @@
-from src.multigait import load_imu_data_lowback
+from multigait.utils.data_loader import load_imu_data_lowback
 from multigait.GSD import KheirkhahanGSD
 
 """

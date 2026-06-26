@@ -8,7 +8,7 @@ from tpcp import Algorithm, cf
 from tpcp.misc import set_defaults
 from typing_extensions import Self
 
-from src.multigait.pipeline.wba_base import (
+from multigait.pipeline.wba_base import (
     BaseIntervalCriteria,
     IntervalDurationCriteria,
 )

@@ -1,7 +1,7 @@
 from typing_extensions import Self, Literal
 import pandas as pd
 import numpy as np
-from src.multigait.GSD.utils.GSD3_utils import (
+from multigait.GSD.utils.GSD3_utils import (
     window,
     sum_partial_overlapping_windows,
     remove_outliers,
@@ -9,9 +9,9 @@ from src.multigait.GSD.utils.GSD3_utils import (
     resample_to_orginal_data_length,
     generate_gs_list,
 )
-from src.multigait.GSD.utils.ActivityCounts import ActivityCounts
-from src.multigait.GSD.base_gsd import BaseGsdDetector
-from src.multigait.GSD.utils.cwb import cwb
+from multigait.GSD.utils.ActivityCounts import ActivityCounts
+from multigait.GSD.base_gsd import BaseGsdDetector
+from multigait.GSD.utils.cwb import cwb
 
 
 class KheirkhahanGSD(BaseGsdDetector):

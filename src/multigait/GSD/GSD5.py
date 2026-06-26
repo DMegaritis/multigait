@@ -3,9 +3,9 @@ from typing_extensions import Self, Literal
 import pandas as pd
 import numpy as np
 from scipy.signal import welch, correlate, find_peaks
-from src.multigait.utils.array import create_sliding_windows
-from src.multigait.GSD.utils.cwb import cwb
-from src.multigait.GSD.base_gsd import BaseGsdDetector
+from multigait.utils.array import create_sliding_windows
+from multigait.GSD.utils.cwb import cwb
+from multigait.GSD.base_gsd import BaseGsdDetector
 from mobgap.data_transform import chain_transformers, ButterworthFilter
 
 

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing_extensions import Self
 from typing import Literal
-from src.multigait.ICD.base_ic import BaseIcDetector  # <-- import base
+from multigait.ICD.base_ic import BaseIcDetector  # <-- import base
 
 
 class GuIC(BaseIcDetector):

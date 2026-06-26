@@ -2,7 +2,7 @@
 # Load example data
 # Loading an example datapoint with data from a wrist worn device
 
-from src.multigait.pipeline.utils.datapoint_check import (
+from multigait.pipeline.utils.datapoint_check import (
     check_gait_datapoint_completeness,
 )
 from examples.example_data.example_constructor import construct_datapoint_from_files
@@ -16,9 +16,9 @@ if not is_complete:
 # %%
 # Running as a single pipeline
 
-from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
-from src.multigait.pipeline.utils._wb_assembly import WbAssembly
-from src.multigait.pipeline.utils._thresholds import get_thresholds
+from multigait.pipeline.utils._stride_filtering import StrideFiltering
+from multigait.pipeline.utils._wb_assembly import WbAssembly
+from multigait.pipeline.utils._thresholds import get_thresholds
 from multigait.aggregation import GenericAggregator
 from multigait.WS import Ws
 from multigait.SL import WeinbergSL

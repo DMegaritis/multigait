@@ -5,7 +5,7 @@ import pandas as pd
 from typing_extensions import Self, Unpack
 
 from mobgap.data_transform import HampelFilter
-from src.multigait.CAD.utils.cad_utils import smooth_and_bin_steps
+from multigait.CAD.utils.cad_utils import smooth_and_bin_steps
 from multigait.CAD.base_cad import BaseCadDetector
 
 

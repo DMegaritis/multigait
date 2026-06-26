@@ -1,7 +1,7 @@
 from typing_extensions import Self, Literal
-from src.multigait.GSD.utils.merge_bouts import merge_bouts
-from src.multigait.GSD.utils.cwb import cwb
-from src.multigait.GSD.base_gsd import BaseGsdDetector
+from multigait.GSD.utils.merge_bouts import merge_bouts
+from multigait.GSD.utils.cwb import cwb
+from multigait.GSD.base_gsd import BaseGsdDetector
 import pandas as pd
 import numpy as np
 from mobgap.data_transform import chain_transformers, GaussianFilter, ButterworthFilter

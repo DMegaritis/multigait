@@ -2,15 +2,15 @@ import numpy as np
 import pandas as pd
 import warnings
 from typing import Literal
-from src.multigait.GSD.utils.gravity_remove_butter import gravity_motion_butterworth
+from multigait.GSD.utils.gravity_remove_butter import gravity_motion_butterworth
 from typing_extensions import Self
-from src.multigait.ICD.utils.auto_cov_unbiased import auto_cov_unbiased
-from src.multigait.ICD.utils.dtwDasGupta import dtwdasgupta
-from src.multigait.ICD.utils.peakfind import peakfind
+from multigait.ICD.utils.auto_cov_unbiased import auto_cov_unbiased
+from multigait.ICD.utils.dtwDasGupta import dtwdasgupta
+from multigait.ICD.utils.peakfind import peakfind
 from scipy.signal import detrend, find_peaks
 from mobgap.data_transform import ButterworthFilter, chain_transformers
 from numpy.lib.stride_tricks import sliding_window_view
-from src.multigait.ICD.base_ic import BaseIcDetector
+from multigait.ICD.base_ic import BaseIcDetector
 
 
 class MicoAmigoIC(BaseIcDetector):

@@ -4,9 +4,9 @@ from typing_extensions import Self
 from scipy import signal
 from mobgap.data_transform import chain_transformers, ButterworthFilter
 from typing import Literal
-from src.multigait.ICD.utils.find_maxima import _find_maxima
-from src.multigait.ICD.utils.zero_crossings import detect_zero_crossings
-from src.multigait.ICD.base_ic import BaseIcDetector
+from multigait.ICD.utils.find_maxima import _find_maxima
+from multigait.ICD.utils.zero_crossings import detect_zero_crossings
+from multigait.ICD.base_ic import BaseIcDetector
 
 
 class ZijlstraIC(BaseIcDetector):

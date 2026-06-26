@@ -1,4 +1,4 @@
-from src.multigait.ICD.utils.zero_crossings import detect_zero_crossings
+from multigait.ICD.utils.zero_crossings import detect_zero_crossings
 import numpy as np
 
 

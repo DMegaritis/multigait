@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from multigait.GSD import IonescuGSD
-from src.multigait import load_imu_data_wrist
+from multigait import load_imu_data_wrist
 
 
 class TestIonescuGSD:

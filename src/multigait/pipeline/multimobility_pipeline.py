@@ -8,34 +8,30 @@ from typing_extensions import Self
 
 # Multimobility imports
 from multigait.CAD.cad import Cadence
-from src.multigait.CAD.base_cad import BaseCadDetector
-from multigait.GSD import KheirkhahanGSD
-from multigait.GSD import IonescuGSD
-from src.multigait.GSD.base_gsd import BaseGsdDetector
-from multigait.ICD import PhamIC
-from multigait.ICD import GuIC
-from multigait.ICD import McCamleyIC
-from src.multigait.ICD.base_ic import BaseIcDetector
+from multigait.CAD.base_cad import BaseCadDetector
+from multigait.GSD import KheirkhahanGSD, IonescuGSD, BaseGsdDetector
+from multigait.ICD import McCamleyIC, ZijlstraIC, GuIC, BaseIcDetector
+from multigait.ICD.base_ic import BaseIcDetector
 from multigait.SL import WeinbergSL
-from src.multigait.SL.base_sl import BaseSlDetector
+from multigait.SL.base_sl import BaseSlDetector
 from multigait.WS import Ws
 from multigait.WS import BaseWsDetector
 
 # Multimobility function imports
-from src.multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_lrc
-from src.multigait.pipeline.utils._wb_assembly import WbAssembly
-from src.multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
+from multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_lrc
+from multigait.pipeline.utils._wb_assembly import WbAssembly
+from multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
 from multigait.aggregation import GenericAggregator
-from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
-from src.multigait.pipeline.iterator import GsIterator, FullPipelinePerGsResult
-from src.multigait.pipeline.utils._operations import create_multi_groupby
-from src.multigait.utils.interp import map_seconds_to_regions
-from multigait.aggregation import AggregatorBase
-from src.multigait.pipeline.pipeline_base import PipelineBase
-from src.multigait.pipeline.pipeline_base import GaitDatasetT
-from src.multigait.utils.data_conversions import rename_axes_to_body
-from src.multigait.pipeline.utils._var_dmos import within_wb_var
-from src.multigait.pipeline.utils.alpha import compute_alpha_mle
+from multigait.pipeline.utils._stride_filtering import StrideFiltering
+from multigait.pipeline.iterator import GsIterator, FullPipelinePerGsResult
+from multigait.pipeline.utils._operations import create_multi_groupby
+from multigait.utils.interp import map_seconds_to_regions
+from multigait.aggregation._aggregator_base import AggregatorBase
+from multigait.pipeline.pipeline_base import PipelineBase
+from multigait.pipeline.pipeline_base import GaitDatasetT
+from multigait.utils.data_conversions import rename_axes_to_body
+from multigait.pipeline.utils._var_dmos import within_wb_var
+from multigait.pipeline.utils.alpha import compute_alpha_mle
 
 
 # Expected variability DMO columns (keep in sync with within_wb_var output)

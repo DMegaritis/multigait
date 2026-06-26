@@ -2,7 +2,8 @@
 # Firstly we calculate cadence from ICs
 
 from multigait.CAD.cad import Cadence
-from src.multigait import load_imu_data_wrist, load_ICs_wrist
+from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
+
 
 imu_data = load_imu_data_wrist()
 # only one bout of walking for the lowback data: 962:1427; for the wrist data 662:2054

@@ -12,9 +12,9 @@ from tpcp import Algorithm, cf
 from tpcp.misc import set_defaults
 from typing_extensions import Self
 
-from src.multigait.pipeline.wba_base import BaseWbRule, EndOfStrideList
+from multigait.pipeline.wba_base import BaseWbRule, EndOfStrideList
 
-from src.multigait.pipeline.utils._wb_criteria import BreakCriteria, StridesCriteria
+from multigait.pipeline.utils._wb_criteria import BreakCriteria, StridesCriteria
 
 
 class WbAssembly(Algorithm):

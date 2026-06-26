@@ -13,8 +13,8 @@ This example shows how to build a full analysis pipeline using multigait algorit
 # -----------------
 
 import pandas as pd
-from src.multigait import map_seconds_to_regions
-from src.multigait.pipeline.utils.datapoint_check import (
+from multigait.utils.interp import map_seconds_to_regions
+from multigait.pipeline.utils.datapoint_check import (
     check_gait_datapoint_completeness,
 )
 from examples.example_data.example_constructor import construct_datapoint_from_files
@@ -133,7 +133,7 @@ gait_sequences = gsd.gs_list_
 # check out the example about the :ref:`Gait Sequence Iterator <gs_iterator_example>`.
 # Note, that we use the special ``r`` object to store the results of each step and the ``subregion`` method to
 # elegantly handle the refined gait sequence.
-from src.multigait.pipeline.iterator import GsIterator
+from multigait.pipeline.iterator import GsIterator
 
 gs_iterator = GsIterator()
 
@@ -190,7 +190,7 @@ combined_results
 # As walking bouts are defined based on strides, we need to turn the ICs into strides and
 # the per-second values into per-stride values by using interpolation.
 # We also calculate the stride duration here.
-from src.multigait import strides_list_from_ic_list_no_lrc
+from multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_lrc
 
 stride_list = (
     results.ic_list.groupby("gs_id", group_keys=False)
@@ -206,7 +206,7 @@ stride_list
 #
 # For now, we are using linear interpolation to map the per-second cadence values to per-stride values and derive
 # approximated stride parameters.
-from src.multigait.pipeline.utils._operations import create_multi_groupby
+from multigait.pipeline.utils._operations import create_multi_groupby
 
 stride_list_with_approx_paras = create_multi_groupby(
     stride_list,
@@ -221,8 +221,8 @@ stride_list_with_approx_paras
 # Now the final strides are regrouped into walking bouts.
 # For this we ignore which gait sequence the strides belong to, hence we remove the ``gs_id`` from the index, but keep
 # it around as column for debugging.
-from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
-from src.multigait.pipeline.utils._wb_assembly import WbAssembly
+from multigait.pipeline.utils._stride_filtering import StrideFiltering
+from multigait.pipeline.utils._wb_assembly import WbAssembly
 
 flat_index = pd.Index(
     ["_".join(str(e) for e in s_id) for s_id in stride_list_with_approx_paras.index],
@@ -251,7 +251,7 @@ final_strides = wba.annotated_stride_list_
 
 # %%
 # Here we calculate the additional DMOs for each WB
-from src.multigait.pipeline.utils._var_dmos import within_wb_var
+from multigait.pipeline.utils._var_dmos import within_wb_var
 
 var_dmos = within_wb_var(final_strides)
 
@@ -283,12 +283,12 @@ per_wb_params.drop(columns="rule_obj").T
 
 # %%
 # Adding alpha calculation
-from src.multigait.pipeline.utils.alpha import compute_alpha_mle
+from multigait.pipeline.utils.alpha import compute_alpha_mle
 
 per_wb_params = compute_alpha_mle(per_wb_params)
 
 # %%
-from src.multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
+from multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
 
 # load single min/max thresholds from:
 thresholds = get_thresholds()

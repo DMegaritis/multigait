@@ -4,7 +4,7 @@ from typing import Literal
 from typing_extensions import Self
 from scipy.signal import find_peaks
 from mobgap.data_transform import chain_transformers, ButterworthFilter, Resample
-from src.multigait.ICD.base_ic import BaseIcDetector
+from multigait.ICD.base_ic import BaseIcDetector
 
 
 class DucharmeIC(BaseIcDetector):

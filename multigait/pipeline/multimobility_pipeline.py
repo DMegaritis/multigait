@@ -206,7 +206,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             {
                 "gait_sequence_detection": KheirkhahanGSD(),
                 "initial_contact_detection": McCamleyIC(),
-                "initial_contact_detection_sl": McCamleyIC(),
+                "initial_contact_detection_sl": None,
                 "cadence_calculation": Cadence(),
                 "stride_length_calculation": WeinbergSL(),
                 "walking_speed_calculation": Ws(),

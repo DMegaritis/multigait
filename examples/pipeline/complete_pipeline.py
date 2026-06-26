@@ -38,7 +38,7 @@ from multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
 pipeline = MultiGaitPipeline(
     gait_sequence_detection=gsd,
     initial_contact_detection=icd,
-    initial_contact_detection_sl=icd,
+    initial_contact_detection_sl=None,
     cadence_calculation=cad,
     stride_length_calculation=sl,
     walking_speed_calculation=ws,

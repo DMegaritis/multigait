@@ -75,26 +75,32 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     - Concrete algorithm instances (objects implementing the detector/calculator interfaces)
       are passed to the constructor; no specific implementations are required at class definition.
     - All major pipeline results are stored as attributes after `run()` execution.
+    - If ``initial_contact_detection_sl`` is not provided, the primary ``initial_contact_detection``
+      is used for stride length calculation as well, with no redundant detection calls.
 
     Parameters
     ----------
-    gait_sequence_detection : BaseGSD
+    gait_sequence_detection : BaseGsdDetector
         Algorithm instance for gait sequence detection.
-    initial_contact_detection : BaseIC
-        Algorithm instance for initial contact detection.
-    cadence_calculation : Optional[BaseCadence], default=None
+    initial_contact_detection : BaseIcDetector
+        Algorithm instance for initial contact detection (used for cadence, walking speed,
+        stride assembly, and stride length if ``initial_contact_detection_sl`` is not provided).
+    initial_contact_detection_sl : Optional[BaseIcDetector], default=None
+        Algorithm instance for initial contact detection used exclusively by the stride length
+        calculation. If None, falls back to ``initial_contact_detection`` with no extra computation.
+    cadence_calculation : Optional[BaseCadDetector], default=None
         Algorithm instance for cadence calculation (per-second).
-    stride_length_calculation : Optional[BaseSL], default=None
+    stride_length_calculation : Optional[BaseSlDetector], default=None
         Algorithm instance for stride length calculation (per-second).
-    walking_speed_calculation : Optional[BaseWS], default=None
+    walking_speed_calculation : Optional[BaseWsDetector], default=None
         Algorithm instance for walking speed calculation (per-second).
-    stride_selection : BaseStrideSelection
+    stride_selection : StrideFiltering
         Algorithm instance used to filter/select strides.
-    wba : BaseWbAssembly
+    wba : WbAssembly
         Logic to assemble filtered strides into walking bouts.
-    dmo_thresholds : Optional[dict], default=None
+    dmo_thresholds : Optional[pd.DataFrame], default=None
         Thresholds for DMO computation, e.g., physiological thresholds.
-    dmo_aggregation : Optional[BaseAggregator], default=None
+    dmo_aggregation : Optional[AggregatorBase], default=None
         Aggregator instance to compute aggregated DMOs from per-WB results.
 
     Raises
@@ -110,31 +116,21 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         Aggregated parameters per walking bout.
     aggregated_parameters_ : pd.DataFrame
         Aggregated daily mobility outcomes (DMOs) across the dataset.
-    gait_sequence_detection_ : BaseGSD
+    gait_sequence_detection_ : BaseGsdDetector
         Instance used for gait sequence detection.
-    initial_contact_detection_ : BaseIC
-        Instance used for initial contact detection.
-    cadence_calculation_ : BaseCadence
-        Instance used for cadence calculation.
-    stride_length_calculation_ : BaseSL
-        Instance used for stride length calculation.
-    walking_speed_calculation_ : BaseWS
-        Instance used for walking speed calculation.
-    stride_selection_ : BaseStrideSelection
-        Instance used for stride filtering/selection.
-    wba_ : BaseWbAssembly
-        Instance used for whole-bout assembly.
-    dmo_thresholds_ : dict
-        Thresholds used internally for DMO computation.
-    dmo_aggregation_ : BaseAggregator
-        Aggregator used to compute DMOs.
-    gs_list_ : list
-        Detected gait sequences (start/end times).
-    gs_iterator_ : iterator
+    gs_iterator_ : GsIterator
         Iterator over gait sequences for intermediate pipeline processing.
+    stride_selection_ : StrideFiltering
+        Instance used for stride filtering/selection.
+    wba_ : WbAssembly
+        Instance used for whole-bout assembly.
+    dmo_aggregation_ : AggregatorBase
+        Aggregator used to compute DMOs.
+    gs_list_ : pd.DataFrame
+        Detected gait sequences (start/end times).
     per_wb_parameter_mask_ : pd.Series
         Boolean mask indicating valid strides per walking bout.
-    raw_ic_list_ : list
+    raw_ic_list_ : pd.DataFrame
         Raw initial contact events detected from IMU data.
     raw_per_stride_parameters_ : pd.DataFrame
         Raw stride-wise parameters before filtering and stride selection.
@@ -145,6 +141,23 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
     Examples
     --------
+    >>> # Custom pipeline with a separate ICD for stride length
+    >>> pipeline = MultiGaitPipeline(
+    >>>     gait_sequence_detection=GSDAlgorithm(),
+    >>>     initial_contact_detection=ICAlgorithm(),
+    >>>     initial_contact_detection_sl=ICAltAlgorithm(),
+    >>>     cadence_calculation=CadenceAlgorithm(),
+    >>>     stride_length_calculation=StrideLengthAlgorithm(),
+    >>>     walking_speed_calculation=WalkingSpeedAlgorithm(),
+    >>>     stride_selection=StrideSelection(),
+    >>>     wba=WalkingBoutAssembly(),
+    >>>     dmo_thresholds=my_thresholds,
+    >>>     dmo_aggregation=DMOAggregator()
+    >>> )
+    >>> pipeline.run(datapoint=my_dataset)
+    >>> print(pipeline.aggregated_parameters_)
+    >>>
+    >>> # Custom pipeline without a separate ICD for stride length (falls back to primary ICD)
     >>> pipeline = MultiGaitPipeline(
     >>>     gait_sequence_detection=GSDAlgorithm(),
     >>>     initial_contact_detection=ICAlgorithm(),
@@ -162,7 +175,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
     gait_sequence_detection: BaseGsdDetector
     initial_contact_detection: BaseIcDetector
-    initial_contact_detection_sl: BaseIcDetector
+    initial_contact_detection_sl: Optional[BaseIcDetector]
     cadence_calculation: Optional[BaseCadDetector]
     stride_length_calculation: Optional[BaseSlDetector]
     walking_speed_calculation: Optional[BaseWsDetector]
@@ -219,13 +232,12 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             }
         )
 
-
     def __init__(
         self,
         *,
         gait_sequence_detection: BaseGsdDetector,
         initial_contact_detection: BaseIcDetector,
-        initial_contact_detection_sl: BaseIcDetector,
+        initial_contact_detection_sl: Optional[BaseIcDetector],
         cadence_calculation: Optional[BaseCadDetector],
         stride_length_calculation: Optional[BaseSlDetector],
         walking_speed_calculation: Optional[BaseWsDetector],
@@ -244,7 +256,6 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         self.wba = wba
         self.dmo_thresholds = dmo_thresholds
         self.dmo_aggregation = dmo_aggregation
-
 
     def run(self, datapoint: GaitDatasetT, **kwargs) -> Self:
         """
@@ -281,7 +292,6 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 "at least implement the ``participant_metadata`` attribute on your dataset, even if it"
                 "just returns an empty dictionary."
             ) from e
-
 
         self.datapoint = datapoint
 
@@ -418,8 +428,12 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
         For each gait sequence this method:
           - clones and runs the initial_contact_detection on the GS data,
+          - optionally runs a separate initial_contact_detection_sl for stride length,
           - runs cadence, stride length and walking speed calculators if provided,
           - populates fields on the per-GS result object (r) that are later concatenated.
+
+        If ``initial_contact_detection_sl`` is None, the IC list from the primary detector
+        is reused for stride length with no redundant detection call.
 
         Parameters
         ----------
@@ -433,14 +447,21 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         GsIterator
             The iterator object containing per-gs results in its .results_ attribute after iteration.
         """
-
         gs_iterator = GsIterator[FullPipelinePerGsResult]()
+
+        # Resolve once before the loop to avoid repeated None checks per GS
+        use_separate_icd_sl = self.initial_contact_detection_sl is not None
 
         for (_, gs_data), r in gs_iterator.iterate(imu_data, gait_sequences):
             icd = self.initial_contact_detection.clone().detect(gs_data)
             r.ic_list = icd.ic_list_
 
-            icd_sl = self.initial_contact_detection_sl.clone().detect(gs_data)
+            # Only run a second detection if a separate SL detector was provided,
+            # otherwise reuse the result from the primary ICD at no extra cost
+            if use_separate_icd_sl:
+                icd_sl_contacts = self.initial_contact_detection_sl.clone().detect(gs_data).ic_list_
+            else:
+                icd_sl_contacts = icd.ic_list_
 
             cad_r = None
             if self.cadence_calculation:
@@ -454,7 +475,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             sl_r = None
             if self.stride_length_calculation:
                 sl = self.stride_length_calculation.clone().calculate(
-                    gs_data, initial_contacts=icd_sl.ic_list_,
+                    gs_data, initial_contacts=icd_sl_contacts,
                     **self._all_action_kwargs
                 )
                 sl_r = sl.stride_length_per_sec_
@@ -578,7 +599,7 @@ class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], G
         *,
         gait_sequence_detection: BaseGsdDetector,
         initial_contact_detection: BaseIcDetector,
-        initial_contact_detection_sl: BaseIcDetector,
+        initial_contact_detection_sl: Optional[BaseIcDetector],
         cadence_calculation: Optional[BaseCadDetector],
         stride_length_calculation: Optional[BaseSlDetector],
         walking_speed_calculation: Optional[BaseWsDetector],
@@ -600,11 +621,12 @@ class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], G
             dmo_aggregation=dmo_aggregation,
         )
 
+
 class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
     """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in a healthier comorbid sample tested in [1].
 
     This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
-    (see PredefinedParameters.preliminary_multimobility) that reflect the configuration
+    (see PredefinedParameters.healthy_comobility) that reflect the configuration
     reported to perform best in a healthier comorbid subsample of the study population
     described in [1].
 
@@ -623,7 +645,7 @@ class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Gener
         *,
         gait_sequence_detection: BaseGsdDetector,
         initial_contact_detection: BaseIcDetector,
-        initial_contact_detection_sl: BaseIcDetector,
+        initial_contact_detection_sl: Optional[BaseIcDetector],
         cadence_calculation: Optional[BaseCadDetector],
         stride_length_calculation: Optional[BaseSlDetector],
         walking_speed_calculation: Optional[BaseWsDetector],

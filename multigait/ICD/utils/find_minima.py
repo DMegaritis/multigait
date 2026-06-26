@@ -23,9 +23,11 @@ def _find_minima(signal: np.ndarray) -> np.ndarray:
         neg_to_pos_crossings = neg_to_pos_crossings[1:]
 
     # Find the local minima in the signal between the positive-to-negative and negative-to-positive crossings
-    minima = np.array([
-        np.argmin(signal[start:end]) + start
-        for start, end in zip(pos_to_neg_crossings, neg_to_pos_crossings)
-    ]).astype("int64")
+    minima = np.array(
+        [
+            np.argmin(signal[start:end]) + start
+            for start, end in zip(pos_to_neg_crossings, neg_to_pos_crossings)
+        ]
+    ).astype("int64")
 
     return minima

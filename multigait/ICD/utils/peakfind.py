@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def peakfind(x, ws):
     """
     Find local maxima in a signal using a sliding window approach.
@@ -35,11 +36,11 @@ def peakfind(x, ws):
 
     # Padding to handle boundary effects
     npad = ws // 2
-    x_padded = np.pad(x, (npad, npad), mode='constant', constant_values=np.nan)
+    x_padded = np.pad(x, (npad, npad), mode="constant", constant_values=np.nan)
 
     locmax = []
     for i in range(npad, len(x_padded) - npad):
-        window = x_padded[i - npad:i + npad + 1]
+        window = x_padded[i - npad : i + npad + 1]
         center_value = window[npad]
         if center_value > np.nanmax(np.delete(window, npad)):
             locmax.append(i - npad)

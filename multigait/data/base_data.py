@@ -2,6 +2,7 @@ from typing import TypedDict
 import pandas as pd
 from tpcp import Dataset
 
+
 class ParticipantMetadata(TypedDict):
     """
     Minimal participant metadata required by gait analysis algorithms.
@@ -79,6 +80,7 @@ class BaseGaitDataset(Dataset):
     sampling_rate_hz: float
     data_ss: pd.DataFrame
     participant_metadata: ParticipantMetadata
+
 
 __all__ = [
     "BaseGaitDataset",

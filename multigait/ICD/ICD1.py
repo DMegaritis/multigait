@@ -12,6 +12,7 @@ from mobgap.data_transform import ButterworthFilter, chain_transformers
 from numpy.lib.stride_tricks import sliding_window_view
 from multigait.ICD.base_ic import BaseIcDetector
 
+
 class MicoAmigoIC(BaseIcDetector):
     """
     Detect initial contacts (ICs) in gait using the Mico-Amigo algorithm [1], original and fine-tuned versions for lowback devices,
@@ -45,7 +46,11 @@ class MicoAmigoIC(BaseIcDetector):
 
     ic_list_: pd.DataFrame
 
-    def __init__ (self, *, version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist") -> None:
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+    ) -> None:
         """
         Initialise the Mico-Amigo IC detection algorithm.
 
@@ -72,7 +77,9 @@ class MicoAmigoIC(BaseIcDetector):
         """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
 
@@ -103,7 +110,6 @@ class MicoAmigoIC(BaseIcDetector):
         self.templatesize = None
         self.acc_size = None
 
-
     def detect(self, data: pd.DataFrame, *, sampling_rate_hz: float = 100) -> Self:
         """
         Detect initial contacts from raw accelerometer data.
@@ -129,13 +135,13 @@ class MicoAmigoIC(BaseIcDetector):
             # removing gravity from the 3 axes using custom function. We remove axis in the wrist version since the
             # original used the anteroposterior axis which does not include gravity component, hence it would be appropriate
             # to remove gravity component before calculating the norm
-            acc_all = data[['acc_is', 'acc_ml', 'acc_pa']]
+            acc_all = data[["acc_is", "acc_ml", "acc_pa"]]
             acc_nograv = gravity_motion_butterworth(acc_all, sampling_rate_hz)
 
             # calculating norm of the acceleration
             acc = np.linalg.norm(acc_nograv, axis=1)
             acc_size = len(acc)
-        elif self.version in ("improved_lowback",  "original_lowback"):
+        elif self.version in ("improved_lowback", "original_lowback"):
             # Only the anteroposterior is used for the lower back version
             acc = data["acc_pa"].to_numpy()
             acc_size = len(acc)
@@ -145,7 +151,7 @@ class MicoAmigoIC(BaseIcDetector):
 
         # Slicing the autocovariance to include the last half plus 10 samples
         mid = len(ac) // 2
-        ac = ac[mid - 10:]
+        ac = ac[mid - 10 :]
 
         # polynomial fit
         x = np.arange(1, len(ac) + 1)
@@ -161,11 +167,20 @@ class MicoAmigoIC(BaseIcDetector):
         possitive_detrend = detrend(residuals)
 
         # Using mobgap ButterworthFilter
-        fc = 0.8*(self._sampling_rate_hz/100)
+        fc = 0.8 * (self._sampling_rate_hz / 100)
 
         # Mob-D filter
-        filter_chain = [("Butter_high_pass", ButterworthFilter(order=2, cutoff_freq_hz=fc, filter_type='highpass'))]
-        possitive_detrend_high = np.asarray(chain_transformers(possitive_detrend, filter_chain, sampling_rate_hz=self._sampling_rate_hz))
+        filter_chain = [
+            (
+                "Butter_high_pass",
+                ButterworthFilter(order=2, cutoff_freq_hz=fc, filter_type="highpass"),
+            )
+        ]
+        possitive_detrend_high = np.asarray(
+            chain_transformers(
+                possitive_detrend, filter_chain, sampling_rate_hz=self._sampling_rate_hz
+            )
+        )
 
         # Fourier Transform
         l = len(possitive_detrend_high)
@@ -183,7 +198,7 @@ class MicoAmigoIC(BaseIcDetector):
         f = self._sampling_rate_hz / 2 * np.linspace(0, 1, nfft // 2 + 1)
 
         # Single sided power spectrum
-        power_spectrum = 2 * np.abs(y[:nfft // 2 + 1])
+        power_spectrum = 2 * np.abs(y[: nfft // 2 + 1])
 
         # Find dominant frequency
         index_ps_dominant_frequency = np.argmax(power_spectrum)
@@ -193,14 +208,14 @@ class MicoAmigoIC(BaseIcDetector):
             dominant_frequency = 1
 
         # Definition of the template size
-        templatesize = round((1/dominant_frequency) * self._sampling_rate_hz)
+        templatesize = round((1 / dominant_frequency) * self._sampling_rate_hz)
 
         # template signal definition
         initiallimit = int(np.floor(self.factorlimit * templatesize))
         endlimit = acc_size - initiallimit
 
         # find peaks (in python given the same indexes but -1)
-        peaks, _ = find_peaks(acc, distance = self.peakdistance * templatesize)
+        peaks, _ = find_peaks(acc, distance=self.peakdistance * templatesize)
 
         # middlemaxima
         middlemaxima = peaks[(peaks > initiallimit) & (peaks < endlimit)] + 1
@@ -208,7 +223,7 @@ class MicoAmigoIC(BaseIcDetector):
         # number of middle maxima
         nmiddlemaxima = len(middlemaxima)
 
-        #shift
+        # shift
         shift = int(np.ceil(self.shiftfactor * templatesize))
 
         # Initialising variables to avoid warnings
@@ -225,25 +240,33 @@ class MicoAmigoIC(BaseIcDetector):
                 for iJunks in range(1, iRowJunks - 1):
                     if iRowJunks == nmiddlemaxima:
                         # calculating indices of start and end
-                        ref_start = middlemaxima[iJunks- 1] - shift
+                        ref_start = middlemaxima[iJunks - 1] - shift
                         ref_end = middlemaxima[iJunks - 1] + templatesize
                         tgt_start = middlemaxima[iJunks] - shift
                         tgt_end = middlemaxima[iJunks] + templatesize
 
                         # Checking the bounds for reference_section if they are out of bounds
                         if ref_start < 0:
-                            print("reference_section start index is out of bounds, setting to 0")
+                            print(
+                                "reference_section start index is out of bounds, setting to 0"
+                            )
                             ref_start = 0
                         if ref_end > len(acc):
-                            print("reference_section end index exceeds bounds, adjusting to max length")
+                            print(
+                                "reference_section end index exceeds bounds, adjusting to max length"
+                            )
                             ref_end = len(acc)
 
                         # Check bounds for target_section if they are out of bounds
                         if tgt_start < 0:
-                            print("target_section start index is out of bounds, setting to 0")
+                            print(
+                                "target_section start index is out of bounds, setting to 0"
+                            )
                             tgt_start = 0
                         if tgt_end > len(acc):
-                            print("target_section end index exceeds bounds, adjusting to max length")
+                            print(
+                                "target_section end index exceeds bounds, adjusting to max length"
+                            )
                             tgt_end = len(acc)
 
                         # Extract sections
@@ -275,8 +298,12 @@ class MicoAmigoIC(BaseIcDetector):
                         raise ValueError("reference_section was not initialized.")
 
                     # append
-                    if len(newresultssection) < len(resultssection):  # Ensure it's not out of bounds
-                        newresultssection.append(dtwsection[:templatesize + 1])  # Store up to templatesize + 1
+                    if len(newresultssection) < len(
+                        resultssection
+                    ):  # Ensure it's not out of bounds
+                        newresultssection.append(
+                            dtwsection[: templatesize + 1]
+                        )  # Store up to templatesize + 1
 
             newresultssection_array = np.array(newresultssection)
             template = newresultssection_array[0]
@@ -293,7 +320,9 @@ class MicoAmigoIC(BaseIcDetector):
                 print("reference_section start index is out of bounds, setting to 0")
                 ref_start = 0
             if ref_end > len(acc):
-                print("reference_section end index exceeds bounds, adjusting to max length")
+                print(
+                    "reference_section end index exceeds bounds, adjusting to max length"
+                )
                 ref_end = len(acc)
 
             # Check bounds for target_section
@@ -301,7 +330,9 @@ class MicoAmigoIC(BaseIcDetector):
                 print("target_section start index is out of bounds, setting to 0")
                 tgt_start = 0
             if tgt_end > len(acc):
-                print("target_section end index exceeds bounds, adjusting to max length")
+                print(
+                    "target_section end index exceeds bounds, adjusting to max length"
+                )
                 tgt_end = len(acc)
 
             # Extract sections
@@ -324,8 +355,8 @@ class MicoAmigoIC(BaseIcDetector):
 
         # Padding the signal (resegmentedsig)
         len_pad_before = templatesize
-        len_pad_after = templatesize*self.num_additional_templates
-        resegmentedsig = np.pad(acc, (len_pad_before, len_pad_after), mode='edge')
+        len_pad_after = templatesize * self.num_additional_templates
+        resegmentedsig = np.pad(acc, (len_pad_before, len_pad_after), mode="edge")
 
         # Searching for similarities between templatesignal and resegmented
         # Ensure template size matches templatesize
@@ -343,7 +374,10 @@ class MicoAmigoIC(BaseIcDetector):
         windows_std = np.std(windows_matrix, axis=1)
 
         # Covariance between template and each window
-        cov = np.mean((windows_matrix - windows_mean[:, None]) * (template - template_mean), axis=1)
+        cov = np.mean(
+            (windows_matrix - windows_mean[:, None]) * (template - template_mean),
+            axis=1,
+        )
 
         # Compute correlation coefficients safely
         denominator = template_std * windows_std
@@ -368,15 +402,17 @@ class MicoAmigoIC(BaseIcDetector):
         # indices were the SD is not 0
         if len(idx) > 0:
             temp = np.copy(sd)
-            temp = np.delete(temp, idx) # Remove the indices where SD is 0
-            sd[idx] = np.min(temp) # Set the SD where it was 0 to the minimum of the rest of the values
+            temp = np.delete(temp, idx)  # Remove the indices where SD is 0
+            sd[idx] = np.min(
+                temp
+            )  # Set the SD where it was 0 to the minimum of the rest of the values
 
         # normalizing the SD and R
         sd = sd / np.nanmax(sd)
         r = r / np.nanmax(r)
 
         # calculating coefficient
-        coef = (r / sd)
+        coef = r / sd
 
         # normalising coef
         coef = coef / np.nanmax(coef)
@@ -387,7 +423,10 @@ class MicoAmigoIC(BaseIcDetector):
         hs_pre = peaks_rsd[:, 0] + shift - self.event_offset
 
         # Selection of events within the signal
-        hs = hs_pre[(hs_pre > templatesize) & (hs_pre < acc_size + templatesize)] - templatesize
+        hs = (
+            hs_pre[(hs_pre > templatesize) & (hs_pre < acc_size + templatesize)]
+            - templatesize
+        )
 
         # step differences
         steps = np.diff(hs)
@@ -395,7 +434,6 @@ class MicoAmigoIC(BaseIcDetector):
         # adjusting last peak if last step is smaller than 0.6 * templatesize
         if len(steps) > 0 and steps[-1] < np.floor(0.6 * templatesize):
             hs = hs[:-1]
-
 
         self.templatesize = templatesize
         self.acc_size = acc_size

@@ -23,9 +23,11 @@ def _find_maxima(signal: np.ndarray) -> np.ndarray:
         pos_to_neg_crossings = pos_to_neg_crossings[1:]
 
     # Find the local maxima in the signal between the negative-to-positive and positive-to-negative crossings
-    maxima = np.array([
-        np.argmax(signal[start:end]) + start
-        for start, end in zip(neg_to_pos_crossings, pos_to_neg_crossings)
-    ]).astype("int64")
+    maxima = np.array(
+        [
+            np.argmax(signal[start:end]) + start
+            for start, end in zip(neg_to_pos_crossings, pos_to_neg_crossings)
+        ]
+    ).astype("int64")
 
     return maxima

@@ -1,4 +1,4 @@
-from multigait.utils.data_loader import load_imu_data_lowback, load_imu_data_wrist
+from multigait.utils.data_loader import load_imu_data_lowback
 from multigait.GSD.GSD4 import MacLeanGSD
 
 """

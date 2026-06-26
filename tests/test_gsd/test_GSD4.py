@@ -6,15 +6,11 @@ from multigait.utils.data_loader import load_imu_data_wrist
 
 
 class TestMacLeanGSD:
-
-    @pytest.mark.parametrize(
-        "version",
-        ["wrist"]
-    )
+    @pytest.mark.parametrize("version", ["wrist"])
     @pytest.mark.parametrize("cwb", [True, False])
     def test_empty_input(self, version, cwb):
         """Test algorithm on zero signal (no gait sequences)."""
-        data = pd.DataFrame(np.zeros((1000, 3)), columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(np.zeros((1000, 3)), columns=["acc_is", "acc_ml", "acc_pa"])
         gs_list = MacLeanGSD(version=version, cwb=cwb).detect(data).gs_list_
 
         # Check that the output DataFrame has correct columns and index
@@ -22,15 +18,14 @@ class TestMacLeanGSD:
         assert gs_list.index.name == "gs_id"
         assert gs_list.empty
 
-    @pytest.mark.parametrize(
-        "version",
-        ["wrist"]
-    )
+    @pytest.mark.parametrize("version", ["wrist"])
     @pytest.mark.parametrize("cwb", [True, False])
     def test_random_signal(self, version, cwb):
         """Test algorithm on random data to check it runs and returns proper columns."""
         np.random.seed(42)
-        data = pd.DataFrame(np.random.rand(500, 3), columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(
+            np.random.rand(500, 3), columns=["acc_is", "acc_ml", "acc_pa"]
+        )
         gs_list = MacLeanGSD(version=version, cwb=cwb).detect(data).gs_list_
 
         # Just check that output has correct columns

@@ -16,7 +16,12 @@ from typing import (
 import pandas as pd
 import numpy as np
 from tpcp import cf
-from tpcp.misc import BaseTypedIterator, TypedIteratorResultTuple, custom_hash, set_defaults
+from tpcp.misc import (
+    BaseTypedIterator,
+    TypedIteratorResultTuple,
+    custom_hash,
+    set_defaults,
+)
 from tpcp.misc._typed_iterator import _NotSet
 from typing_extensions import TypeAlias
 
@@ -27,7 +32,6 @@ class Region(NamedTuple):
     Represents an identified gait segment using an ID and an interval defined
     by start and end indices. Optionally tracks the origin ID value if provided.
     """
-
 
     id: str
     start: int
@@ -84,13 +88,19 @@ def _infer_id_col(region_list: pd.DataFrame, id_col: Optional[str] = None) -> st
         return "wb_id"
     if "gs_id" in region_list_all_cols:
         return "gs_id"
-    if len(region_list.index.names) == 1 and (name := region_list.index.names[0]) is not None:
+    if (
+        len(region_list.index.names) == 1
+        and (name := region_list.index.names[0]) is not None
+    ):
         return name
     raise ValueError(
         "Unable to determine identifier column; please supply the column name explicitly."
     )
 
-def _validate_region_list(region_list: pd.DataFrame, id_col: str, data_len: int) -> None:
+
+def _validate_region_list(
+    region_list: pd.DataFrame, id_col: str, data_len: int
+) -> None:
     """
     Validate structural and logical consistency of the region definition table.
 
@@ -123,8 +133,13 @@ def _validate_region_list(region_list: pd.DataFrame, id_col: str, data_len: int)
 
     # Numeric check and no NaNs
     if not region_list.empty:
-        if not (pd.api.types.is_numeric_dtype(region_list["start"]) and pd.api.types.is_numeric_dtype(region_list["end"])):
-            raise TypeError("Columns 'start' and 'end' must be numeric (integers or floats).")
+        if not (
+            pd.api.types.is_numeric_dtype(region_list["start"])
+            and pd.api.types.is_numeric_dtype(region_list["end"])
+        ):
+            raise TypeError(
+                "Columns 'start' and 'end' must be numeric (integers or floats)."
+            )
         if region_list[["start", "end"]].isna().any().any():
             raise ValueError("Columns 'start' and 'end' must not contain NaN values.")
 
@@ -137,7 +152,9 @@ def _validate_region_list(region_list: pd.DataFrame, id_col: str, data_len: int)
         # If all values are integer-like we can safely coerce and apply the original end<=data_len check.
         starts = region_list["start"].to_numpy(dtype=float)
         ends = region_list["end"].to_numpy(dtype=float)
-        integer_like = np.isclose(starts, np.round(starts), atol=1e-8) & np.isclose(ends, np.round(ends), atol=1e-8)
+        integer_like = np.isclose(starts, np.round(starts), atol=1e-8) & np.isclose(
+            ends, np.round(ends), atol=1e-8
+        )
 
         if integer_like.all():
             # safe to coerce to integers in-place (keeps downstream .iloc semantics)
@@ -145,6 +162,7 @@ def _validate_region_list(region_list: pd.DataFrame, id_col: str, data_len: int)
             region_list["end"] = region_list["end"].round().astype(int)
             if (region_list["end"] > data_len).any():
                 raise ValueError("Region 'end' exceeds the total length of the data.")
+
 
 def iter_gs(
     data: pd.DataFrame, region_list: pd.DataFrame, *, id_col: Optional[str] = None
@@ -190,6 +208,7 @@ def iter_gs(
     # Iterate over each gait-sequence and yield its corresponding data slice
     for gs in region_list[relevant_cols].itertuples(index=False):
         yield RegionDataTuple(Region(*gs, index_col), data.iloc[gs.start : gs.end])
+
 
 @dataclass
 class FullPipelinePerGsResult:
@@ -269,8 +288,8 @@ def create_aggregate_df(
     """
 
     def aggregate_df(values: list["GsIterator.IteratorResult[Any]"]) -> pd.DataFrame:
-        non_null_results: list[GsIterator.IteratorResult[pd.DataFrame]] = GsIterator.filter_iterator_results(
-            values, key, _null_value
+        non_null_results: list[GsIterator.IteratorResult[pd.DataFrame]] = (
+            GsIterator.filter_iterator_results(values, key, _null_value)
         )
         if len(non_null_results) == 0:
             # Note: We don't have a way to properly know the names of the index cols or the cols themselve here...
@@ -279,7 +298,8 @@ def create_aggregate_df(
         # We assume that all elements have the same iteration context.
         first_element = non_null_results[0]
         iter_index_name = _build_id_cols(
-            first_element.input.region, first_element.iteration_context.get("parent_region", None)
+            first_element.input.region,
+            first_element.iteration_context.get("parent_region", None),
         )
 
         to_concat = {}
@@ -287,7 +307,9 @@ def create_aggregate_df(
             df = rt.result
             region_id, offset, *_ = rt.input.region
 
-            parent_region: Optional[Region] = rt.iteration_context.get("parent_region", None)
+            parent_region: Optional[Region] = rt.iteration_context.get(
+                "parent_region", None
+            )
 
             _validate_iter_type(rt.iteration_name, parent_region)
 
@@ -303,7 +325,10 @@ def create_aggregate_df(
                 df.index += offset
             to_concat[region_id] = df
 
-        return pd.concat(to_concat, names=[*iter_index_name, *next(iter(to_concat.values())).index.names])
+        return pd.concat(
+            to_concat,
+            names=[*iter_index_name, *next(iter(to_concat.values())).index.names],
+        )
 
     return aggregate_df
 
@@ -383,14 +408,23 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
                 "aggregations": cf(
                     [
                         ("ic_list", create_aggregate_df("ic_list", ["ic"])),
-                        ("cadence_per_sec", create_aggregate_df("cadence_per_sec", [], shift_index=True)),
+                        (
+                            "cadence_per_sec",
+                            create_aggregate_df(
+                                "cadence_per_sec", [], shift_index=True
+                            ),
+                        ),
                         (
                             "stride_length_per_sec",
-                            create_aggregate_df("stride_length_per_sec", [], shift_index=True),
+                            create_aggregate_df(
+                                "stride_length_per_sec", [], shift_index=True
+                            ),
                         ),
                         (
                             "walking_speed_per_sec",
-                            create_aggregate_df("walking_speed_per_sec", [], shift_index=True),
+                            create_aggregate_df(
+                                "walking_speed_per_sec", [], shift_index=True
+                            ),
                         ),
                     ]
                 ),
@@ -403,8 +437,14 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
                     [
                         ("ic_list", create_aggregate_df("ic_list", [])),
                         ("cadence_per_sec", create_aggregate_df("cadence_per_sec", [])),
-                        ("stride_length_per_sec", create_aggregate_df("stride_length", [])),
-                        ("walking_speed_per_sec", create_aggregate_df("gait_speed", [])),
+                        (
+                            "stride_length_per_sec",
+                            create_aggregate_df("stride_length", []),
+                        ),
+                        (
+                            "walking_speed_per_sec",
+                            create_aggregate_df("gait_speed", []),
+                        ),
                     ]
                 ),
             }
@@ -444,7 +484,7 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
         super().__init__(data_type, aggregations)
 
     def iterate(
-            self, data: pd.DataFrame, region_list: pd.DataFrame
+        self, data: pd.DataFrame, region_list: pd.DataFrame
     ) -> Iterator[tuple[tuple[Region, pd.DataFrame], DataclassT]]:
         """
         Iterate through all gait regions sequentially.
@@ -467,7 +507,7 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
         yield from self._iterate(iter_gs(data, region_list))
 
     def iterate_subregions(
-            self, sub_region_list: pd.DataFrame
+        self, sub_region_list: pd.DataFrame
     ) -> Iterator[tuple[tuple[Region, pd.DataFrame], DataclassT]]:
         """
         Iterate over subregions within the active parent gait region.
@@ -489,7 +529,9 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
         """
         # We only allow sub iterations, when there are no other subiterations running.
         if getattr(self, "done_", {}).get("__main__", True):
-            raise ValueError("Cannot start sub-iterations after main iteration has completed.")
+            raise ValueError(
+                "Cannot start sub-iterations after main iteration has completed."
+            )
         if not self.done_.get("__sub_iter__", True):
             raise ValueError("Sub-iterations are not allowed within sub-iterations.")
 
@@ -517,7 +559,9 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
                 "Make sure you use the result object returned by the subregion iteration."
             )
 
-    def with_subregion(self, sub_region_list: pd.DataFrame) -> tuple[tuple[Region, pd.DataFrame], DataclassT]:
+    def with_subregion(
+        self, sub_region_list: pd.DataFrame
+    ) -> tuple[tuple[Region, pd.DataFrame], DataclassT]:
         """Retrieve a single subregion from the active parent region.
 
         Accepts a region list containing exactly one subregion, executes iteration
@@ -551,7 +595,9 @@ class GsIterator(BaseTypedIterator[RegionDataTuple, DataclassT], Generic[Datacla
         return list(self.iterate_subregions(sub_region_list))[0]  # noqa: RUF015
 
     @contextmanager
-    def subregion(self, sub_region_list: pd.DataFrame) -> Iterator[tuple[tuple[Region, pd.DataFrame], DataclassT]]:
+    def subregion(
+        self, sub_region_list: pd.DataFrame
+    ) -> Iterator[tuple[tuple[Region, pd.DataFrame], DataclassT]]:
         """Context manager to process a single subregion of the active region.
 
         Provides a controlled block to operate on a subregion and ensures that only

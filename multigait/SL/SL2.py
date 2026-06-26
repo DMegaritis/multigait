@@ -73,6 +73,7 @@ class KimSL(BaseSlDetector):
     max_interpolation_gap_s: float
     raw_step_length_per_step_: pd.DataFrame
     step_length_per_sec_: pd.DataFrame
+
     def __init__(
         self,
         *,
@@ -89,7 +90,6 @@ class KimSL(BaseSlDetector):
     ) -> None:
         self.version = version
         self.max_interpolation_gap_s = 3
-
 
     def calculate(
         self,
@@ -163,12 +163,19 @@ class KimSL(BaseSlDetector):
 
         # Check if ICs are not sorted and sort if necessary
         if not self.initial_contacts["ic"].is_monotonic_increasing:
-            warnings.warn("Initial contacts were not in ascending order. Rearranging them.", stacklevel=2)
-            self.initial_contacts = self.initial_contacts.sort_values("ic").reset_index(drop=True)
+            warnings.warn(
+                "Initial contacts were not in ascending order. Rearranging them.",
+                stacklevel=2,
+            )
+            self.initial_contacts = self.initial_contacts.sort_values("ic").reset_index(
+                drop=True
+            )
 
         self.ic_list = self.initial_contacts["ic"].to_numpy()
 
-        if len(self.ic_list) > 0 and (self.ic_list[0] != 0 or self.ic_list[-1] != len(self.data) - 1):
+        if len(self.ic_list) > 0 and (
+            self.ic_list[0] != 0 or self.ic_list[-1] != len(self.data) - 1
+        ):
             warnings.warn(
                 "Usually we assume that gait sequences are cut to the first and last detected initial "
                 "contact. "
@@ -188,16 +195,29 @@ class KimSL(BaseSlDetector):
         # Checking if ic_list is empty or includes only 1 IC
         if len(self.ic_list) <= 1:
             # We can not calculate step length with only one or zero initial contact
-            warnings.warn("Can not calculate step length with only one or zero initial contacts.", stacklevel=1)
+            warnings.warn(
+                "Can not calculate step length with only one or zero initial contacts.",
+                stacklevel=1,
+            )
             self._set_all_nan(sec_centers, self.ic_list)
             return self
 
-        if self.version in ["lowback", "lowback_adaptive", "lowback_foot", "lowback_adaptive_foot"]:
+        if self.version in [
+            "lowback",
+            "lowback_adaptive",
+            "lowback_foot",
+            "lowback_adaptive_foot",
+        ]:
             # Keeping the vertical acceleration for the lowback version
             vacc = self.data["acc_is"].to_numpy()
-        elif self.version in ["wrist", "wrist_adaptive", "wrist_foot", "wrist_adaptive_foot"]:
+        elif self.version in [
+            "wrist",
+            "wrist_adaptive",
+            "wrist_foot",
+            "wrist_adaptive_foot",
+        ]:
             # Using the acceleration norm for the wrist version
-            cols = ['acc_is', 'acc_ml', 'acc_pa']
+            cols = ["acc_is", "acc_ml", "acc_pa"]
             vacc = np.linalg.norm(self.data[cols].values, axis=1)
 
         # turning m/s^2 to g since the multigait perform better
@@ -217,14 +237,15 @@ class KimSL(BaseSlDetector):
             initial_contacts_per_sec,
             raw_step_length_padded,
             sec_centers,
-            self.max_interpolation_gap_s
+            self.max_interpolation_gap_s,
         )
         # Stride length is derived by multiplying the step length by 2
         stride_length_per_sec = step_length_per_sec * 2
 
-        self._unify_and_set_outputs(raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers)
+        self._unify_and_set_outputs(
+            raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers
+        )
         return self
-
 
     def _calc_step_length_kim(
         self,
@@ -248,11 +269,26 @@ class KimSL(BaseSlDetector):
         """
 
         # 1. Calculating mean of acceleration between each initial contact
-        mean = np.array([np.mean(vacc[ic:ic_next]) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        mean = np.array(
+            [
+                np.mean(vacc[ic:ic_next])
+                for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+            ]
+        )
 
         # 2. If version is adaptive calculate RMS between each initial contact
-        if self.version in ["wrist_adaptive", "wrist_adaptive_foot", "lowback_adaptive", "lowback_adaptive_foot"]:
-            rms_values = np.array([np.sqrt(np.mean(np.square(vacc[ic:ic_next]))) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        if self.version in [
+            "wrist_adaptive",
+            "wrist_adaptive_foot",
+            "lowback_adaptive",
+            "lowback_adaptive_foot",
+        ]:
+            rms_values = np.array(
+                [
+                    np.sqrt(np.mean(np.square(vacc[ic:ic_next])))
+                    for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+                ]
+            )
 
             # calculating the mean rms
             mean_rms = np.mean(rms_values)
@@ -261,15 +297,15 @@ class KimSL(BaseSlDetector):
             if mean_rms == 0:
                 warnings.warn(
                     "The calculated RMS is 0. Step length calculation will proceed without scaling KimA.",
-                    stacklevel=2)
+                    stacklevel=2,
+                )
             else:
                 self.KimA = self.KimA * mean_rms
 
         # 3. Calculating step length. Using absolute values to avoid errors
-        step_length = self.KimA * (np.abs(mean) ** (1/3)) + self.KimB
+        step_length = self.KimA * (np.abs(mean) ** (1 / 3)) + self.KimB
 
         return step_length
-
 
     def _set_all_nan(self, sec_centers: np.ndarray, ic_list: np.ndarray) -> None:
         """
@@ -290,14 +326,16 @@ class KimSL(BaseSlDetector):
         stride_length_per_sec = np.full(len(sec_centers), np.nan)
         raw_step_length = np.full(np.clip(len(ic_list) - 1, 0, None), np.nan)
         step_length_per_sec = np.full(len(sec_centers), np.nan)
-        self._unify_and_set_outputs(raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers)
+        self._unify_and_set_outputs(
+            raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers
+        )
 
     def _unify_and_set_outputs(
-            self,
-            raw_step_length: np.ndarray,
-            step_length_per_sec: np.ndarray,
-            stride_length_per_sec: np.ndarray,
-            sec_centers: np.ndarray,
+        self,
+        raw_step_length: np.ndarray,
+        step_length_per_sec: np.ndarray,
+        stride_length_per_sec: np.ndarray,
+        sec_centers: np.ndarray,
     ) -> None:
         """
         Combine step and stride lengths into pandas DataFrames and calculate average stride length.
@@ -319,13 +357,24 @@ class KimSL(BaseSlDetector):
         """
 
         # Convert ic_list to a pandas DataFrame temporarily for assignment
-        self.raw_step_length_per_step_ = pd.DataFrame({
-            "ic": self.ic_list[:-1],  # Excluding the last element
-            "step_length_m": raw_step_length
-        })
-        index = pd.Index(seconds_to_samples(sec_centers, self.sampling_rate_hz), name="sec_center_samples")
-        self.step_length_per_sec_ = pd.DataFrame({"step_length_m": step_length_per_sec}, index=index)
-        self.stride_length_per_sec_ = pd.DataFrame({"stride_length_m": stride_length_per_sec}, index=index)
+        self.raw_step_length_per_step_ = pd.DataFrame(
+            {
+                "ic": self.ic_list[:-1],  # Excluding the last element
+                "step_length_m": raw_step_length,
+            }
+        )
+        index = pd.Index(
+            seconds_to_samples(sec_centers, self.sampling_rate_hz),
+            name="sec_center_samples",
+        )
+        self.step_length_per_sec_ = pd.DataFrame(
+            {"step_length_m": step_length_per_sec}, index=index
+        )
+        self.stride_length_per_sec_ = pd.DataFrame(
+            {"stride_length_m": stride_length_per_sec}, index=index
+        )
 
         # Calculate the average stride length
-        self.average_stride_length_ = self.stride_length_per_sec_["stride_length_m"].mean()
+        self.average_stride_length_ = self.stride_length_per_sec_[
+            "stride_length_m"
+        ].mean()

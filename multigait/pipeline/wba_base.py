@@ -43,7 +43,12 @@ def _compare_with_thresh_multiple(
     lower_threshold, upper_threshold = _check_thresh(lower_threshold, upper_threshold)
     lower_op = np.greater_equal if inclusive[0] else np.greater
     upper_op = np.less_equal if inclusive[1] else np.less
-    return pd.Series((lower_op(values, lower_threshold) & upper_op(values, upper_threshold)).astype(bool), index=values.index)
+    return pd.Series(
+        (lower_op(values, lower_threshold) & upper_op(values, upper_threshold)).astype(
+            bool
+        ),
+        index=values.index,
+    )
 
 
 class BaseWbRule:
@@ -84,19 +89,23 @@ class BaseWbRule:
 
 class EndOfStrideList(BaseWbRule):
     """Dummy criteria used internally to represent the end of the stride list."""
+
     pass
 
 
 class BaseIntervalCriteria(BaseTpcpObject):
     """Base class for criteria that filter intervals (e.g., strides)."""
 
-    def check_multiple(self, intervals: pd.DataFrame, *, sampling_rate_hz: Optional[float] = None) -> pd.Series:
+    def check_multiple(
+        self, intervals: pd.DataFrame, *, sampling_rate_hz: Optional[float] = None
+    ) -> pd.Series:
         """Return a boolean Series: True if intervals meet the criterion."""
         raise NotImplementedError("Must be implemented by child class.")
 
     def requires_columns(self) -> list[str]:
         """Return the list of required columns in the interval DataFrame."""
         raise NotImplementedError("Must be implemented by child class.")
+
 
 class IntervalDurationCriteria(BaseIntervalCriteria):
     """Checks the interval duration computed as (end - start) / sampling_rate_hz."""
@@ -117,14 +126,26 @@ class IntervalDurationCriteria(BaseIntervalCriteria):
     def requires_columns(self) -> list[str]:
         return [self._START_COL_NAME, self._END_COL_NAME]
 
-    def _get_values(self, intervals: pd.DataFrame, sampling_rate_hz: Optional[float] = None) -> pd.Series:
+    def _get_values(
+        self, intervals: pd.DataFrame, sampling_rate_hz: Optional[float] = None
+    ) -> pd.Series:
         if sampling_rate_hz is None:
-            raise ValueError("sampling_rate_hz must be provided for IntervalDurationCriteria")
+            raise ValueError(
+                "sampling_rate_hz must be provided for IntervalDurationCriteria"
+            )
         try:
-            return (intervals[self._END_COL_NAME] - intervals[self._START_COL_NAME]) / sampling_rate_hz
+            return (
+                intervals[self._END_COL_NAME] - intervals[self._START_COL_NAME]
+            ) / sampling_rate_hz
         except KeyError as e:
-            raise ValueError(f"Intervals must contain both '{self._START_COL_NAME}' and '{self._END_COL_NAME}'") from e
+            raise ValueError(
+                f"Intervals must contain both '{self._START_COL_NAME}' and '{self._END_COL_NAME}'"
+            ) from e
 
-    def check_multiple(self, intervals: pd.DataFrame, *, sampling_rate_hz: Optional[float] = None) -> pd.Series:
+    def check_multiple(
+        self, intervals: pd.DataFrame, *, sampling_rate_hz: Optional[float] = None
+    ) -> pd.Series:
         values = self._get_values(intervals, sampling_rate_hz)
-        return _compare_with_thresh_multiple(values, self.min_duration_s, self.max_duration_s, self.inclusive)
+        return _compare_with_thresh_multiple(
+            values, self.min_duration_s, self.max_duration_s, self.inclusive
+        )

@@ -3,11 +3,7 @@ import numpy as np
 from typing import Literal
 from typing_extensions import Self
 from scipy.signal import find_peaks
-from mobgap.data_transform import (
-    chain_transformers,
-    ButterworthFilter,
-    Resample
-)
+from mobgap.data_transform import chain_transformers, ButterworthFilter, Resample
 from multigait.ICD.base_ic import BaseIcDetector
 
 
@@ -53,7 +49,11 @@ class DucharmeIC(BaseIcDetector):
 
     ic_list_: pd.DataFrame
 
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"]="wrist") -> None:
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+    ) -> None:
         """
         Initialise the DucharmeIC detector.
 
@@ -64,13 +64,15 @@ class DucharmeIC(BaseIcDetector):
         """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
 
         if version == "wrist":
             self.threshold = 0.01 * 9.81
-        elif version ==  "original_lowback":
+        elif version == "original_lowback":
             self.threshold = 0.0267 * 9.81
         elif version == "improved_lowback":
             self.threshold = 0.02 * 9.81
@@ -96,26 +98,30 @@ class DucharmeIC(BaseIcDetector):
         self.sampling_rate_hz = sampling_rate_hz
 
         # 1. Euclidean norm of the data
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc_norm = np.linalg.norm(self.data[cols].values, axis=1)
-
 
         # 2. Detrend the signal by subtracting the mean
         acc_detr = acc_norm - np.mean(acc_norm)
-
 
         # 3. Bandpass Butterworth filtering
         # Because the original sampling rate was 80Hz (and 60Hz from another sensor),
         # here we downsample
         downsample = 80
         cutoff = (0.25, 2.5)
-        filter_chain = [# Resample to 80Hz for filtering with similar cutoffs as the original algo
+        filter_chain = [  # Resample to 80Hz for filtering with similar cutoffs as the original algo
             ("downsampling", Resample(downsample)),
-            ("butter", ButterworthFilter(order=4, cutoff_freq_hz=cutoff, filter_type='bandpass'))
+            (
+                "butter",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=cutoff, filter_type="bandpass"
+                ),
+            ),
         ]
 
-        acc_filt = chain_transformers(acc_detr, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
-
+        acc_filt = chain_transformers(
+            acc_detr, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+        )
 
         # 4. Peak detection
         peaks, _ = find_peaks(acc_filt, height=self.threshold)

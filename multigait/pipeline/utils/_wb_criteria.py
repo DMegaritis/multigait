@@ -5,6 +5,7 @@ import pandas as pd
 from typing_extensions import Literal
 from multigait.pipeline.wba_base import BaseWbRule
 
+
 class StridesCriteria(BaseWbRule):
     """Min number of strides / contacts in the WB.
 
@@ -51,15 +52,21 @@ class StridesCriteria(BaseWbRule):
         # Keep original min_strides behaviour
         if self.min_strides is not None:
             if self.min_strides < 0:
-                raise ValueError(f"Only positive values are allowed for `min_strides` not {self.min_strides}")
+                raise ValueError(
+                    f"Only positive values are allowed for `min_strides` not {self.min_strides}"
+                )
             return len(stride_list) >= self.min_strides
 
         # Use contacts sum if configured
         if self.min_contacts is not None:
             if self.min_contacts < 0:
-                raise ValueError(f"Only positive values are allowed for `min_contacts` not {self.min_contacts}")
+                raise ValueError(
+                    f"Only positive values are allowed for `min_contacts` not {self.min_contacts}"
+                )
             if self.contacts_col not in stride_list.columns:
-                raise ValueError(f"Contacts column '{self.contacts_col}' not found in stride_list")
+                raise ValueError(
+                    f"Contacts column '{self.contacts_col}' not found in stride_list"
+                )
             # Sum contacts; allow numeric-like values
             total_contacts = int(stride_list[self.contacts_col].sum())
             return total_contacts >= self.min_contacts
@@ -118,13 +125,22 @@ class BreakCriteria(BaseWbRule):
         sampling_rate_hz: Optional[float] = None,
     ) -> tuple[Optional[int], Optional[int], Optional[int]]:
         if sampling_rate_hz is None:
-            raise ValueError("The sampling rate must be provided if the BreakCriteria is used.")
+            raise ValueError(
+                "The sampling rate must be provided if the BreakCriteria is used."
+            )
 
         if self.max_break_s < 0:
-            raise ValueError(f'Only positive values are allowed for "max_break" not {self.max_break_s}')
+            raise ValueError(
+                f'Only positive values are allowed for "max_break" not {self.max_break_s}'
+            )
 
-        if not isinstance(self.remove_last_ic, bool) and not self.remove_last_ic == "per_foot":
-            raise ValueError("`remove_last_ic` must be a Boolean or the string 'per_foot'.")
+        if (
+            not isinstance(self.remove_last_ic, bool)
+            and not self.remove_last_ic == "per_foot"
+        ):
+            raise ValueError(
+                "`remove_last_ic` must be a Boolean or the string 'per_foot'."
+            )
 
         # The method is called once including the final stride.
         # We handle this case only, if the `consider_end_as_break` is True.

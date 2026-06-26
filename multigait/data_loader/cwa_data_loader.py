@@ -1,6 +1,6 @@
 import warnings
 from pathlib import Path
-from typing import Optional, Sequence, Literal, Union
+from typing import Optional, Literal, Union
 import pandas as pd
 from cwa_reader_rs import read_cwa_file, read_header
 
@@ -49,7 +49,9 @@ class CWADataset:
         self.missing_sensor_error_type = missing_sensor_error_type
         self.error_log = []
 
-    def _process_file(self, file_path: Path) -> tuple[Optional[pd.DataFrame], str, Optional[float]]:
+    def _process_file(
+        self, file_path: Path
+    ) -> tuple[Optional[pd.DataFrame], str, Optional[float]]:
         """
         Read a single CWA file and extract sensor data, sampling rate, and hardware type.
 
@@ -76,7 +78,9 @@ class CWADataset:
                 include_battery=False,
             )
             df = pd.DataFrame(data)
-            df["time"] = (df["timestamp"].astype("int64") * 1000).astype("datetime64[ns]")
+            df["time"] = (df["timestamp"].astype("int64") * 1000).astype(
+                "datetime64[ns]"
+            )
             df = df[["time"] + [c for c in df.columns if c != "time"]]
             df = df.drop(columns=["timestamp"])
             return df, sensor_type, sampling_rate
@@ -153,7 +157,9 @@ class CWADataset:
                     }
         return result
 
-    def get_sensor_data(self, participant_id: str, sensor: Optional[str] = None) -> Optional[pd.DataFrame]:
+    def get_sensor_data(
+        self, participant_id: str, sensor: Optional[str] = None
+    ) -> Optional[pd.DataFrame]:
         """Return the DataFrame for a given participant and sensor.
 
         If the sensor is not available, a warning is issued. Valid options are 'Wrist' and 'LowerBack'.
@@ -176,7 +182,9 @@ class CWADataset:
 
         return data[participant_id][sensor]["data"]
 
-    def get_sampling_rate(self, participant_id: str, sensor: Optional[str] = None) -> Optional[float]:
+    def get_sampling_rate(
+        self, participant_id: str, sensor: Optional[str] = None
+    ) -> Optional[float]:
         """
         Retrieve the sampling rate for a participant's sensor.
 
@@ -196,7 +204,9 @@ class CWADataset:
             sensor = next(iter(data[participant_id].keys()), None)
         return data[participant_id].get(sensor, {}).get("sampling_rate")
 
-    def get_hardware_type(self, participant_id: str, sensor: Optional[str] = None) -> Optional[str]:
+    def get_hardware_type(
+        self, participant_id: str, sensor: Optional[str] = None
+    ) -> Optional[str]:
         """
         Retrieve the hardware type for a participant's sensor.
 

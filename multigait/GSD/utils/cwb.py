@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def cwb(df, max_break_seconds=3, sampling_rate=100):
     """
     Creating a Continuous Walking Bout (CWB) from micro walking bouts.

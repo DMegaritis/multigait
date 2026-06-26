@@ -16,8 +16,8 @@ def dominant_freqency(data, sampling_rate_hz: float) -> int:
     frequencies = np.fft.fftfreq(n, d=1 / sampling_rate_hz)
 
     # Only keep the positive frequencies (real part)
-    positive_frequencies = frequencies[:n // 2]
-    positive_fft_signal = np.abs(fft_signal[:n // 2])
+    positive_frequencies = frequencies[: n // 2]
+    positive_fft_signal = np.abs(fft_signal[: n // 2])
 
     # Find the dominant frequency
     dominant_frequency = positive_frequencies[np.argmax(positive_fft_signal)]

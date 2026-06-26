@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 
+
 def seconds_to_samples(time_value, fs_hz):
     """Convert a time value in seconds to the equivalent number of samples.
 
@@ -47,10 +48,7 @@ def rename_axes_to_body(data: pd.DataFrame) -> pd.DataFrame:
     df = data.rename(columns=rename_dict)
 
     # Desired order
-    desired_order = [
-        "acc_is", "acc_ml", "acc_pa",
-        "gyr_is", "gyr_ml", "gyr_pa"
-    ]
+    desired_order = ["acc_is", "acc_ml", "acc_pa", "gyr_is", "gyr_ml", "gyr_pa"]
 
     # Keep only those that exist in the DataFrame
     ordered_existing = [c for c in desired_order if c in df.columns]

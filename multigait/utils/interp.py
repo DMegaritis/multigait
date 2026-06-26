@@ -98,7 +98,9 @@ def interpolate_step_metric(
 
     # Interval averaging per second
     half_window = 0.5
-    bounds = np.column_stack((second_centers - half_window, second_centers + half_window))
+    bounds = np.column_stack(
+        (second_centers - half_window, second_centers + half_window)
+    )
     per_second = average_over_intervals(ic_times_sec, smoothed_step, bounds)
 
     # Apply smoothing at second level
@@ -111,10 +113,9 @@ def interpolate_step_metric(
     # group_lengths contains lengths only for NaN segments
 
     # Interpolate internal gaps
-    interpolated = (
-        second_smoothed.interpolate(method="linear", limit_area="inside")
-        .where(group_lengths <= max_gap_s)
-    )
+    interpolated = second_smoothed.interpolate(
+        method="linear", limit_area="inside"
+    ).where(group_lengths <= max_gap_s)
 
     return interpolated.to_numpy()
 
@@ -146,20 +147,26 @@ def map_seconds_to_regions(
         Regions with additional columns representing averaged second metrics.
     """
     if regions.empty:
-        return regions.reindex(columns=list(regions.columns) + list(second_params.columns))
+        return regions.reindex(
+            columns=list(regions.columns) + list(second_params.columns)
+        )
 
     if second_params.empty:
         empty_block = pd.DataFrame(index=regions.index, columns=second_params.columns)
         return pd.concat([regions, empty_block], axis=1)
 
-    invalid_cols = [col for col, dt in second_params.dtypes.items() if not is_float_dtype(dt)]
+    invalid_cols = [
+        col for col, dt in second_params.dtypes.items() if not is_float_dtype(dt)
+    ]
     if invalid_cols:
         raise ValueError(
             f"Non-float columns found in second_params: {invalid_cols}. "
             "Convert to floats before region aggregation."
         )
 
-    sec_positions = second_params.index.get_level_values("sec_center_samples").to_numpy()
+    sec_positions = second_params.index.get_level_values(
+        "sec_center_samples"
+    ).to_numpy()
     values = second_params.to_numpy()
 
     # Convert from second-center to second-end for integration logic
@@ -171,7 +178,9 @@ def map_seconds_to_regions(
     padded_values = np.vstack((values[0], values))
 
     cumulative = np.cumsum(padded_values, axis=0) * sampling_rate_hz
-    interpolation_fn = interp1d(padded_positions, cumulative, axis=0, fill_value="extrapolate")
+    interpolation_fn = interp1d(
+        padded_positions, cumulative, axis=0, fill_value="extrapolate"
+    )
 
     starts = regions["start"].to_numpy()
     ends = regions["end"].to_numpy()
@@ -181,5 +190,7 @@ def map_seconds_to_regions(
     durations = (ends - starts)[:, None]
     means = (integrated[1] - integrated[0]) / durations
 
-    out = pd.DataFrame(means, columns=second_params.columns, index=regions.index).astype(second_params.dtypes)
+    out = pd.DataFrame(
+        means, columns=second_params.columns, index=regions.index
+    ).astype(second_params.dtypes)
     return pd.concat([regions, out], axis=1)

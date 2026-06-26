@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import typing
-import warnings
 from types import MappingProxyType
 from typing import Final
 
@@ -124,7 +123,9 @@ class LaboratoryAggregator(AggregatorBase):
     ]
 
     # Aggregations computed once for all walking bouts (added ws/strlen entries)
-    _ALL_WB_AGGS: typing.ClassVar[dict[str, tuple[str, typing.Union[str, typing.Callable]]]] = {
+    _ALL_WB_AGGS: typing.ClassVar[
+        dict[str, tuple[str, typing.Union[str, typing.Callable]]]
+    ] = {
         "wb_all_sum": ("duration_s", "count"),
         "walkdur_all_sum": ("duration_s", "sum"),
         "wbsteps_all_sum": ("n_raw_initial_contacts", "sum"),
@@ -151,7 +152,14 @@ class LaboratoryAggregator(AggregatorBase):
     }
 
     # Only the 'all WBs' aggregation is used
-    _FILTERS_AND_AGGS: typing.ClassVar[list[tuple[typing.Optional[str], dict[str, tuple[str, typing.Union[str, typing.Callable]]]]]] = [
+    _FILTERS_AND_AGGS: typing.ClassVar[
+        list[
+            tuple[
+                typing.Optional[str],
+                dict[str, tuple[str, typing.Union[str, typing.Callable]]],
+            ]
+        ]
+    ] = [
         (None, _ALL_WB_AGGS),
     ]
 
@@ -190,7 +198,9 @@ class LaboratoryAggregator(AggregatorBase):
             }
         )
 
-    @set_defaults(**{k: cf(v) for k, v in PredefinedParameters.single_recording.items()})
+    @set_defaults(
+        **{k: cf(v) for k, v in PredefinedParameters.single_recording.items()}
+    )
     def __init__(
         self,
         groupby: typing.Optional[typing.Sequence[str]],
@@ -215,13 +225,21 @@ class LaboratoryAggregator(AggregatorBase):
         groupby = self.groupby if self.groupby is None else list(self.groupby)
 
         if not any(col in self.wb_dmos.columns for col in self.INPUT_COLUMNS):
-            raise ValueError(f"None of the valid input columns {self.INPUT_COLUMNS} found in the passed dataframe.")
+            raise ValueError(
+                f"None of the valid input columns {self.INPUT_COLUMNS} found in the passed dataframe."
+            )
 
-        if groupby and not all(col in self.wb_dmos.reset_index().columns for col in groupby):
-            raise ValueError(f"Not all groupby columns {self.groupby} found in the passed dataframe.")
+        if groupby and not all(
+            col in self.wb_dmos.reset_index().columns for col in groupby
+        ):
+            raise ValueError(
+                f"Not all groupby columns {self.groupby} found in the passed dataframe."
+            )
 
         data_correct_index = (
-            wb_dmos.reset_index().set_index([*(groupby or []), self.unique_wb_id_column]).sort_index()
+            wb_dmos.reset_index()
+            .set_index([*(groupby or []), self.unique_wb_id_column])
+            .sort_index()
         )
 
         if not data_correct_index.index.is_unique:
@@ -254,8 +272,13 @@ class LaboratoryAggregator(AggregatorBase):
             self.filtered_wb_dmos_ = data_correct_index.where(wb_dmos_mask)
 
             # If duration is implausible, remove whole walking bout
-            if "duration_s" in data_correct_index.columns and "duration_s" in wb_dmos_mask.columns:
-                self.filtered_wb_dmos_ = self.filtered_wb_dmos_.where(wb_dmos_mask["duration_s"])
+            if (
+                "duration_s" in data_correct_index.columns
+                and "duration_s" in wb_dmos_mask.columns
+            ):
+                self.filtered_wb_dmos_ = self.filtered_wb_dmos_.where(
+                    wb_dmos_mask["duration_s"]
+                )
 
             # If stride_length or cadence implausible, walking_speed is implausible
             if "walking_speed_mps" in data_correct_index.columns:
@@ -264,36 +287,53 @@ class LaboratoryAggregator(AggregatorBase):
                     walking_speed_filter &= wb_dmos_mask["stride_length_m"]
                 if "cadence_spm" in wb_dmos_mask.columns:
                     walking_speed_filter &= wb_dmos_mask["cadence_spm"]
-                self.filtered_wb_dmos_.loc[:, "walking_speed_mps"] = self.filtered_wb_dmos_.loc[
-                    :, "walking_speed_mps"
-                ].where(walking_speed_filter)
+                self.filtered_wb_dmos_.loc[:, "walking_speed_mps"] = (
+                    self.filtered_wb_dmos_.loc[:, "walking_speed_mps"].where(
+                        walking_speed_filter
+                    )
+                )
         else:
             self.filtered_wb_dmos_ = data_correct_index.copy()
 
         # Select aggregations that can be computed from the available columns
-        available_filters_and_aggs = self._select_aggregations(data_correct_index.columns)
+        available_filters_and_aggs = self._select_aggregations(
+            data_correct_index.columns
+        )
 
         # Apply aggregations (only the single "all WBs" aggregation will be applied)
-        self.aggregated_data_ = self._apply_aggregations(self.filtered_wb_dmos_, groupby, available_filters_and_aggs)
+        self.aggregated_data_ = self._apply_aggregations(
+            self.filtered_wb_dmos_, groupby, available_filters_and_aggs
+        )
 
         # Post-process counts and units
         self.aggregated_data_ = self._fillna_count_columns(self.aggregated_data_)
         self.aggregated_data_ = self._convert_units(self.aggregated_data_)
 
         if self.use_original_names is False:
-            self.aggregated_data_ = self.aggregated_data_.rename(columns=self.ALTERNATIVE_NAMES, errors="ignore")
+            self.aggregated_data_ = self.aggregated_data_.rename(
+                columns=self.ALTERNATIVE_NAMES, errors="ignore"
+            )
 
         return self
 
     def _select_aggregations(
         self, data_columns: list[str]
-    ) -> list[tuple[typing.Optional[str], dict[str, tuple[str, typing.Union[str, typing.Callable]]]]]:
+    ) -> list[
+        tuple[
+            typing.Optional[str],
+            dict[str, tuple[str, typing.Union[str, typing.Callable]]],
+        ]
+    ]:
         """Build list of available aggregations based on columns in the input data.
 
         Since this class computes only the 'all WBs' aggregations, this simply filters
         _ALL_WB_AGGS by available source columns.
         """
-        available_aggs = {key: value for key, value in self._ALL_WB_AGGS.items() if value[0] in data_columns}
+        available_aggs = {
+            key: value
+            for key, value in self._ALL_WB_AGGS.items()
+            if value[0] in data_columns
+        }
         if not available_aggs:
             return []
         return [(None, available_aggs)]
@@ -302,7 +342,9 @@ class LaboratoryAggregator(AggregatorBase):
     def _apply_aggregations(
         filtered_data: pd.DataFrame,
         groupby: typing.Optional[list[str]],
-        available_filters_and_aggs: list[tuple[str, dict[str, tuple[str, typing.Union[str, typing.Callable]]]]],
+        available_filters_and_aggs: list[
+            tuple[str, dict[str, tuple[str, typing.Union[str, typing.Callable]]]]
+        ],
     ) -> pd.DataFrame:
         """Apply aggregations to the data. This mirrors GenericAggregator behaviour but only
         the 'all WBs' aggregation is expected to be applied."""
@@ -312,7 +354,9 @@ class LaboratoryAggregator(AggregatorBase):
             if groupby:
                 data_to_agg = internal_filtered.groupby(groupby)
             else:
-                data_to_agg = internal_filtered.groupby(pd.Series("all_wbs", index=internal_filtered.index))
+                data_to_agg = internal_filtered.groupby(
+                    pd.Series("all_wbs", index=internal_filtered.index)
+                )
             aggregated_results.append(data_to_agg.agg(**agg))
         if not aggregated_results:
             # Return empty DataFrame with no columns if nothing to aggregate

@@ -1,8 +1,8 @@
 # %%
 # Firstly we calculate cadence from ICs
 
-from multigait.CAD.cad import Cadence, CadenceSimple
-from multigait.utils.data_loader import load_imu_data_lowback, load_ICs_lowback, load_imu_data_wrist, load_ICs_wrist
+from multigait.CAD.cad import Cadence
+from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
 
 imu_data = load_imu_data_wrist()
 # only one bout of walking for the lowback data: 962:1427; for the wrist data 662:2054
@@ -21,18 +21,15 @@ cad_from_ic.calculate(
 print(cad_from_ic.cadence_per_sec_)
 
 
-
 # %%
 # Then we calculate stride length
 from multigait.SL.SL1 import WeinbergSL
-from multigait.utils.data_loader import load_imu_data_lowback, load_ICs_lowback, load_imu_data_wrist, load_ICs_wrist
+from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
 
 
 # calling the stride length algorithm
 sl = WeinbergSL(version="wrist").calculate(
-    data=imu_data,
-    initial_contacts=reference_ic,
-    sampling_rate_hz=100
+    data=imu_data, initial_contacts=reference_ic, sampling_rate_hz=100
 )
 
 print(sl.stride_length_per_sec_)
@@ -43,7 +40,7 @@ from multigait.WS.walking_speed import Ws
 
 ws = Ws().calculate(
     cadence_per_sec=cad_from_ic.cadence_per_sec_,
-    stride_length_per_sec=sl.stride_length_per_sec_
+    stride_length_per_sec=sl.stride_length_per_sec_,
 )
 
 print(ws.walking_speed_per_sec_)

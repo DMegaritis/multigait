@@ -1,5 +1,5 @@
 from multigait.ICD.ICD2 import McCamleyIC
-from multigait.utils.data_loader import load_imu_data_lowback, load_imu_data_wrist
+from multigait.utils.data_loader import load_imu_data_lowback
 
 """
 This is an example on how to use the McCamley algo to detect initial contacts.

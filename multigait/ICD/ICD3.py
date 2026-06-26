@@ -8,7 +8,7 @@ from mobgap.data_transform import (
     chain_transformers,
     ButterworthFilter,
     CwtFilter,
-    Resample
+    Resample,
 )
 from multigait.ICD.utils.dominant_frequency import dominant_freqency
 from multigait.ICD.base_ic import BaseIcDetector
@@ -52,8 +52,11 @@ class PhamIC(BaseIcDetector):
     _UPSAMPLED_RATE = 128
     ic_list_: pd.DataFrame
 
-
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist") -> None:
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+    ) -> None:
         """
         Initialize the PhamIC detector.
 
@@ -64,7 +67,9 @@ class PhamIC(BaseIcDetector):
         """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
 
@@ -74,10 +79,9 @@ class PhamIC(BaseIcDetector):
         elif self.version == "original_lowback":
             self.cwt = "fixed"
             self.percentage_thresh = 0.4
-        elif self.version ==  "improved_lowback":
+        elif self.version == "improved_lowback":
             self.cwt = "adaptive"
             self.percentage_thresh = 0.1
-
 
     def detect(self, data: pd.DataFrame, *, sampling_rate_hz: float = 100) -> Self:
         """
@@ -105,30 +109,46 @@ class PhamIC(BaseIcDetector):
             Returns the instance with detected initial contacts stored in `ic_list_` and the processed signal in `final_signal_`.
         """
 
-
         self.data = data
         self.sampling_rate_hz = sampling_rate_hz
 
         # selecting data based on version
         if self.version == "wrist":
             # we use the norm of the acceleration vector for the wrist version
-            cols = ['acc_is', 'acc_ml', 'acc_pa']
+            cols = ["acc_is", "acc_ml", "acc_pa"]
             acc = np.linalg.norm(self.data[cols].values, axis=1)
         elif self.version in ["original_lowback", "improved_lowback"]:
             # only the anteroposterior is used for the lower back
             acc = data["acc_pa"].to_numpy()
 
         # Upsample data to the original sampling rate of the paper
-        filter_chain = [("resample", Resample(target_sampling_rate_hz=self._UPSAMPLED_RATE))]
-        acc_upsamp = np.asarray(chain_transformers(acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [
+            ("resample", Resample(target_sampling_rate_hz=self._UPSAMPLED_RATE))
+        ]
+        acc_upsamp = np.asarray(
+            chain_transformers(
+                acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # Detrend data
         detrended_data = signal.detrend(acc_upsamp)
 
         # Low pass Butterworth
         cutoff = 10
-        filter_chain = [("butter", ButterworthFilter(order=2, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
-        acc_pa_butter = np.asarray(chain_transformers(detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [
+            (
+                "butter",
+                ButterworthFilter(
+                    order=2, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                ),
+            )
+        ]
+        acc_pa_butter = np.asarray(
+            chain_transformers(
+                detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # Cumulative trapezoidal integration
         integrated_data = integrate.cumulative_trapezoid(acc_pa_butter, initial=0)
@@ -139,22 +159,34 @@ class PhamIC(BaseIcDetector):
         if self.cwt == "fixed":
             freq = 1
         elif self.cwt == "adaptive":
-            freq = dominant_freqency(integrated_data, sampling_rate_hz=self._UPSAMPLED_RATE)
+            freq = dominant_freqency(
+                integrated_data, sampling_rate_hz=self._UPSAMPLED_RATE
+            )
             # if freq is 0 it is turned to 1.0, if it is above 5 it is turned to 5.0. A frequency higher than 5 is not adequate to smooth the signal
             if freq == 0:
                 freq = 1.0
             elif freq > 5:
                 freq = 5.0
 
-        filter_chain = [("cwt", CwtFilter(wavelet='gaus1', center_frequency_hz=freq))]
-        data_cwt = np.asarray(chain_transformers(integrated_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [("cwt", CwtFilter(wavelet="gaus1", center_frequency_hz=freq))]
+        data_cwt = np.asarray(
+            chain_transformers(
+                integrated_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # Detrend data
         detrended_data = signal.detrend(data_cwt)
 
         # Downsample data to the original sampling rate
-        filter_chain = [("resample", Resample(target_sampling_rate_hz=self.sampling_rate_hz))]
-        detrended_data = np.asarray(chain_transformers(detrended_data, filter_chain, sampling_rate_hz=self._UPSAMPLED_RATE))
+        filter_chain = [
+            ("resample", Resample(target_sampling_rate_hz=self.sampling_rate_hz))
+        ]
+        detrended_data = np.asarray(
+            chain_transformers(
+                detrended_data, filter_chain, sampling_rate_hz=self._UPSAMPLED_RATE
+            )
+        )
 
         self.final_signal_ = detrended_data
 
@@ -164,8 +196,8 @@ class PhamIC(BaseIcDetector):
 
         # If no peeaks deteted then we shortcut by returning an empty df
         if ic_indices.size == 0:
-            self.ic_list_ = pd.DataFrame(columns=['ic'])
-            self.ic_list_.index.name = 'step_id'
+            self.ic_list_ = pd.DataFrame(columns=["ic"])
+            self.ic_list_.index.name = "step_id"
             return self
 
         # Keeping only ICs above the threshold which is calculated as a percentage of the magnitude of the peaks

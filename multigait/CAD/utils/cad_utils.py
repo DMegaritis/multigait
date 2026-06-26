@@ -50,10 +50,14 @@ def smooth_and_bin_steps(
     # Gap-aware linear interpolation
     valid_mask = smoothed_per_sec.notna()
     gap_groups = valid_mask.ne(valid_mask.shift()).cumsum()
-    gap_sizes = smoothed_per_sec.groupby([gap_groups, smoothed_per_sec.isna()]).transform("size").where(
-        smoothed_per_sec.isna()
+    gap_sizes = (
+        smoothed_per_sec.groupby([gap_groups, smoothed_per_sec.isna()])
+        .transform("size")
+        .where(smoothed_per_sec.isna())
     )
-    smoothed_per_sec = smoothed_per_sec.interpolate(method="linear", limit_area="inside").mask(gap_sizes > max_gap_s)
+    smoothed_per_sec = smoothed_per_sec.interpolate(
+        method="linear", limit_area="inside"
+    ).mask(gap_sizes > max_gap_s)
 
     return smoothed_per_sec.to_numpy()
 
@@ -97,5 +101,3 @@ def compute_interval_mean(
         means = np.array([np.nanmean(values[s:e]) for s, e in zip(starts, ends)])
 
     return means
-
-

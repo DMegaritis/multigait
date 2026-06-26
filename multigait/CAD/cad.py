@@ -54,7 +54,9 @@ class Cadence(BaseCadDetector):
         self.n_sigma = n_sigma
 
         # Initialising the HampelFilter (it's fine to create here, but tpcp needs the raw params stored as attributes)
-        self.step_smoothing_filter = HampelFilter(half_window_size=hampel_window, n_sigmas=n_sigma)
+        self.step_smoothing_filter = HampelFilter(
+            half_window_size=hampel_window, n_sigmas=n_sigma
+        )
 
     def calculate(
         self,
@@ -91,13 +93,15 @@ class Cadence(BaseCadDetector):
         initial_contacts = initial_contacts["ic"]
         # Checking that ICs are not empty
         if len(initial_contacts) == 0:
-            warnings.warn("No initial contacts provided. Cadence will be NaN", stacklevel=2)
+            warnings.warn(
+                "No initial contacts provided. Cadence will be NaN", stacklevel=2
+            )
 
         # Checking if ICs are sorted and sorting if necessary
         if not initial_contacts.is_monotonic_increasing:
             warnings.warn(
                 "ICs must be sorted in ascending order. Automatically resorting to ascending order.",
-                stacklevel=2
+                stacklevel=2,
             )
             initial_contacts = initial_contacts.sort_values().reset_index(drop=True)
 
@@ -106,8 +110,11 @@ class Cadence(BaseCadDetector):
         sec_centers = 0.5 + np.arange(int(np.ceil(n_secs)))
 
         # Cadence calculation per second
-        ic_times = initial_contacts_in_seconds.to_numpy() if isinstance(initial_contacts_in_seconds,
-                                                                         pd.Series) else initial_contacts_in_seconds
+        ic_times = (
+            initial_contacts_in_seconds.to_numpy()
+            if isinstance(initial_contacts_in_seconds, pd.Series)
+            else initial_contacts_in_seconds
+        )
 
         if len(ic_times) <= 1:
             warnings.warn(
@@ -135,13 +142,13 @@ class Cadence(BaseCadDetector):
 
         self.cadence_per_sec_ = pd.DataFrame(
             {"cadence_spm": cadence_spm},
-            index=np.round(sec_centers * sampling_rate_hz).astype("int64")
+            index=np.round(sec_centers * sampling_rate_hz).astype("int64"),
         ).rename_axis(index="sec_center_samples")
 
         return self
 
 
-class CadenceSimple():
+class CadenceSimple:
     """
     Lightweight stride-based average cadence estimator.
 
@@ -171,22 +178,25 @@ class CadenceSimple():
         return
 
     def calculate(
-            self,
-            data: pd.DataFrame,
-            *,
-            initial_contacts: pd.DataFrame,
-            sampling_rate_hz: float
+        self,
+        data: pd.DataFrame,
+        *,
+        initial_contacts: pd.DataFrame,
+        sampling_rate_hz: float,
     ) -> float:
         self.initial_contacts = initial_contacts
         self.sampling_rate_hz = sampling_rate_hz
         self.data = data
 
-        ic_times = initial_contacts['ic'].to_numpy() / sampling_rate_hz
+        ic_times = initial_contacts["ic"].to_numpy() / sampling_rate_hz
         n_ics = len(ic_times)
 
         # Need at least 3 ICs to form one full stride
         if n_ics < 3:
-            warnings.warn("Not enough ICs to calculate stride-based cadence. Returning NaN.", stacklevel=2)
+            warnings.warn(
+                "Not enough ICs to calculate stride-based cadence. Returning NaN.",
+                stacklevel=2,
+            )
             self.cadence_spm_ = float("nan")
             return self.cadence_spm_
 

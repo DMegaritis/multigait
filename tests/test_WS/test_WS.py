@@ -26,7 +26,9 @@ class TestWs:
     def test_simple(self):
         i = pd.Index(np.arange(0, 5, 1), name="time")
         cadence = pd.DataFrame({"cadence_spm": [120, 130, 140, 150, 160]}, index=i)
-        stride_length = pd.DataFrame({"stride_length_m": [1.2, 1.3, 1.4, 1.5, 1.6]}, index=i)
+        stride_length = pd.DataFrame(
+            {"stride_length_m": [1.2, 1.3, 1.4, 1.5, 1.6]}, index=i
+        )
         # Data can be empty
         data = pd.DataFrame([])
         sampling_rate_hz = 1
@@ -35,12 +37,16 @@ class TestWs:
             data=data,
             cadence_per_sec=cadence,
             stride_length_per_sec=stride_length,
-            sampling_rate_hz=sampling_rate_hz
+            sampling_rate_hz=sampling_rate_hz,
         )
 
         expected = pd.DataFrame(
-            {"walking_speed_mps": (cadence.to_numpy() * stride_length.to_numpy() / (60 * 2)).flatten()},
-            index=i
+            {
+                "walking_speed_mps": (
+                    cadence.to_numpy() * stride_length.to_numpy() / (60 * 2)
+                ).flatten()
+            },
+            index=i,
         )
 
         assert_frame_equal(ws.walking_speed_per_sec_, expected)
@@ -49,7 +55,9 @@ class TestWs:
     def test_requires_cadence_and_sl(self, para):
         i = pd.Index(np.arange(0, 5, 1), name="time")
         cadence = pd.DataFrame({"cadence_spm": [120, 130, 140, 150, 160]}, index=i)
-        stride_length = pd.DataFrame({"stride_length_m": [1.2, 1.3, 1.4, 1.5, 1.6]}, index=i)
+        stride_length = pd.DataFrame(
+            {"stride_length_m": [1.2, 1.3, 1.4, 1.5, 1.6]}, index=i
+        )
         data = pd.DataFrame([])
         sampling_rate_hz = 1
 

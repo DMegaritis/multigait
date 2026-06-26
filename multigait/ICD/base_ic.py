@@ -29,7 +29,13 @@ class BaseIcDetector(Algorithm):
     sampling_rate_hz: float
     ic_list_: pd.DataFrame
 
-    def detect(self, data: pd.DataFrame, *, sampling_rate_hz: float, **kwargs: Unpack[dict[str, Any]]) -> Self:
+    def detect(
+        self,
+        data: pd.DataFrame,
+        *,
+        sampling_rate_hz: float,
+        **kwargs: Unpack[dict[str, Any]],
+    ) -> Self:
         """Implement in subclass."""
         raise NotImplementedError
 

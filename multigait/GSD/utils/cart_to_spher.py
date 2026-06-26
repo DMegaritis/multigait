@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def cart_to_spher(data: pd.DataFrame) -> pd.DataFrame:
     """
     Converts Cartesian coordinates (x, y, z) in a DataFrame to spherical coordinates (azimuth, elevation, norm).
@@ -16,7 +17,7 @@ def cart_to_spher(data: pd.DataFrame) -> pd.DataFrame:
     assert len(data.columns) == 3, "DataFrame must have exactly 3 columns"
 
     # Calculate the vector magnitude, azimuth, and elevation for each row
-    r = np.linalg.norm(data[['acc_is', 'acc_ml', 'acc_pa']].values, axis=1)
+    r = np.linalg.norm(data[["acc_is", "acc_ml", "acc_pa"]].values, axis=1)
     azimuth = np.arctan2(data.iloc[:, 1], data.iloc[:, 0])
     elevation = np.arcsin(data.iloc[:, 2] / r)
 
@@ -24,13 +25,13 @@ def cart_to_spher(data: pd.DataFrame) -> pd.DataFrame:
     data = data.copy()
 
     # Add the calculated columns to the DataFrame
-    data.loc[:, 'azimuth'] = azimuth
-    data.loc[:, 'elevation'] = elevation
-    data.loc[:, 'norm'] = r
+    data.loc[:, "azimuth"] = azimuth
+    data.loc[:, "elevation"] = elevation
+    data.loc[:, "norm"] = r
 
     # Convert angles from radians to degrees
-    #data['azimuth_deg'] = np.degrees(data['azimuth'])
-    #data['elevation_deg'] = np.degrees(data['elevation'])
+    # data['azimuth_deg'] = np.degrees(data['azimuth'])
+    # data['elevation_deg'] = np.degrees(data['elevation'])
 
     # Return the updated DataFrame
     return data

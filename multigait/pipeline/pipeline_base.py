@@ -1,5 +1,4 @@
-"""base typing interface for pipelines.
-"""
+"""base typing interface for pipelines."""
 
 from typing import Generic, Optional, TypeVar
 import pandas as pd

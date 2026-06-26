@@ -1,7 +1,14 @@
 from typing_extensions import Self, Literal
 import pandas as pd
-import  numpy as np
-from multigait.GSD.utils.GSD3_utils import window, sum_partial_overlapping_windows, remove_outliers, calc_activity_parameter, resample_to_orginal_data_length, generate_gs_list
+import numpy as np
+from multigait.GSD.utils.GSD3_utils import (
+    window,
+    sum_partial_overlapping_windows,
+    remove_outliers,
+    calc_activity_parameter,
+    resample_to_orginal_data_length,
+    generate_gs_list,
+)
 from multigait.GSD.utils.ActivityCounts import ActivityCounts
 from multigait.GSD.base_gsd import BaseGsdDetector
 from multigait.GSD.utils.cwb import cwb
@@ -37,8 +44,12 @@ class KheirkhahanGSD(BaseGsdDetector):
     - Optionally, detected micro walking bouts can be returned if cwb is False. For use with the pipeline bouts should be merged into Continuous Walking Bouts (CWB).
     """
 
-
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist", cwb: bool=True):
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+        cwb: bool = True,
+    ):
         """
         Initialize the class.
 
@@ -51,8 +62,9 @@ class KheirkhahanGSD(BaseGsdDetector):
         """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
-
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
         self.cwb = cwb
@@ -75,7 +87,6 @@ class KheirkhahanGSD(BaseGsdDetector):
             self.win_shift_s = 1
             self.lower_percentile = 20
             self.upper_percentile = 90
-
 
     def detect(self, data, *, sampling_rate_hz: float = 100) -> Self:
         """
@@ -100,25 +111,32 @@ class KheirkhahanGSD(BaseGsdDetector):
         self.data_len = len(data)
 
         # In the current implementation for wrist worn sensors we use the norm
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc = self.data[cols]
         norm_acc = np.linalg.norm(acc, axis=1)
 
         # Finds the activity counts per second
         # turning acc to g-units for activity counts calculation
         norm_acc = norm_acc / 9.81
-        activity_counts = ActivityCounts().calculate(data=norm_acc.copy(), sampling_rate=self.sampling_rate_hz).activity_counts_
+        activity_counts = (
+            ActivityCounts()
+            .calculate(data=norm_acc.copy(), sampling_rate=self.sampling_rate_hz)
+            .activity_counts_
+        )
 
         # shortcut if all activity counts are 0 no gait can be detected
         if np.all(activity_counts == 0):
             self.gs_list_ = pd.DataFrame(columns=["start", "end"])
-            self.gs_list_.index.name = 'gs_id'
+            self.gs_list_.index.name = "gs_id"
             return self
 
         # Checks if activity counts are shorter than the window size
         if len(activity_counts) < self.win_size_s:
             raise ValueError(
-                'The provided data stream is too short. It must be at least {}s long'.format(self.win_size_s))
+                "The provided data stream is too short. It must be at least {}s long".format(
+                    self.win_size_s
+                )
+            )
 
         # Creates overlapping windows of activity counts data (activity counts are expressed in seconds)
         windows = window(activity_counts, self.win_size_s, self.win_shift_s, copy=True)
@@ -126,7 +144,11 @@ class KheirkhahanGSD(BaseGsdDetector):
         # Outlier removal only when window size is 5 or higher otherwise this method might remove regular values
         if self.win_size_s > 4:
             # Removes outliers from the windows, the limits are configurable
-            filtered_activity_counts = remove_outliers(windows.copy(), lower_percentile=self.lower_percentile, upper_percentile=self.upper_percentile)
+            filtered_activity_counts = remove_outliers(
+                windows.copy(),
+                lower_percentile=self.lower_percentile,
+                upper_percentile=self.upper_percentile,
+            )
         else:
             filtered_activity_counts = windows.copy()
 
@@ -138,14 +160,18 @@ class KheirkhahanGSD(BaseGsdDetector):
         walking_windows[inactivity_parameter < self.threshold] = 1
 
         # Shows how many times each second's activity counts are included in the moving window
-        detected_walking = sum_partial_overlapping_windows(walking_windows, activity_counts, self.win_size_s, self.win_shift_s)
+        detected_walking = sum_partial_overlapping_windows(
+            walking_windows, activity_counts, self.win_size_s, self.win_shift_s
+        )
 
         # Interpolates the walking windows to the original data length (True or False for all data points)
-        detected_walking = resample_to_orginal_data_length(detected_walking, len(norm_acc)).astype(bool)
+        detected_walking = resample_to_orginal_data_length(
+            detected_walking, len(norm_acc)
+        ).astype(bool)
 
         gs = generate_gs_list(detected_walking)
         # Clipping start and end to be within limits of file
-        gs[['start', 'end']] = np.clip(gs[['start', 'end']], 0, len(self.data))
+        gs[["start", "end"]] = np.clip(gs[["start", "end"]], 0, len(self.data))
 
         # Creating Continuous Walking Bouts from micro walking bouts
         if self.cwb:

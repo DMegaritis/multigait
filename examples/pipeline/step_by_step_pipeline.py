@@ -14,9 +14,9 @@ This example shows how to build a full analysis pipeline using multigait algorit
 
 import pandas as pd
 from multigait.utils.interp import map_seconds_to_regions
-from multigait.utils.data_conversions import rename_axes_to_body
 from multigait.pipeline.utils.datapoint_check import check_gait_datapoint_completeness
 from examples.example_data.example_constructor import construct_datapoint_from_files
+
 data = construct_datapoint_from_files()
 imu_data = data.data_ss
 sampling_rate_hz = data.sampling_rate_hz
@@ -51,7 +51,9 @@ first_gait_sequence_data = imu_data.iloc[
 
 from multigait.ICD.ICD2 import McCamleyIC
 
-icd = McCamleyIC(version="improved_lowback").detect(first_gait_sequence_data, sampling_rate_hz=100)
+icd = McCamleyIC(version="improved_lowback").detect(
+    first_gait_sequence_data, sampling_rate_hz=100
+)
 ic_list = icd.ic_list_
 ic_list
 
@@ -60,6 +62,7 @@ ic_list
 # Step 3: Cadence Calculation
 # ---------------------------
 from multigait.CAD.cad import Cadence
+
 cad = Cadence()
 cad.calculate(
     first_gait_sequence_data,
@@ -76,9 +79,7 @@ cad_per_sec
 from multigait.SL.SL1 import WeinbergSL
 
 sl = WeinbergSL(version="wrist").calculate(
-    data=first_gait_sequence_data,
-    initial_contacts=ic_list,
-    sampling_rate_hz=100
+    data=first_gait_sequence_data, initial_contacts=ic_list, sampling_rate_hz=100
 )
 
 sl_per_sec = sl.stride_length_per_sec_
@@ -90,10 +91,7 @@ sl_per_sec
 
 from multigait.WS.walking_speed import Ws
 
-ws = Ws().calculate(
-    cadence_per_sec=cad_per_sec,
-    stride_length_per_sec=sl_per_sec
-)
+ws = Ws().calculate(cadence_per_sec=cad_per_sec, stride_length_per_sec=sl_per_sec)
 
 ws_per_sec = ws.walking_speed_per_sec_
 ws_per_sec
@@ -138,9 +136,7 @@ from multigait.pipeline.iterator import GsIterator
 gs_iterator = GsIterator()
 
 for (_, gs_data), r in gs_iterator.iterate(imu_data, gait_sequences):
-    icd = icd.clone().detect(
-        gs_data, sampling_rate_hz=sampling_rate_hz
-    )
+    icd = icd.clone().detect(gs_data, sampling_rate_hz=sampling_rate_hz)
     r.ic_list = icd.ic_list_
 
     # cadence
@@ -197,9 +193,7 @@ from multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_l
 stride_list = (
     results.ic_list.groupby("gs_id", group_keys=False)
     .apply(strides_list_from_ic_list_no_lrc)
-    .assign(
-        stride_duration_s=lambda df_: (df_.end - df_.start) / sampling_rate_hz
-    )
+    .assign(stride_duration_s=lambda df_: (df_.end - df_.start) / sampling_rate_hz)
 )
 stride_list
 
@@ -229,10 +223,7 @@ from multigait.pipeline.utils._stride_filtering import StrideFiltering
 from multigait.pipeline.utils._wb_assembly import WbAssembly
 
 flat_index = pd.Index(
-    [
-        "_".join(str(e) for e in s_id)
-        for s_id in stride_list_with_approx_paras.index
-    ],
+    ["_".join(str(e) for e in s_id) for s_id in stride_list_with_approx_paras.index],
     name="s_id",
 )
 stride_list_with_approx_paras = (
@@ -259,6 +250,7 @@ final_strides = wba.annotated_stride_list_
 # %%
 # Here we calculate the additional DMOs for each WB
 from multigait.pipeline.utils._var_dmos import within_wb_var
+
 var_dmos = within_wb_var(final_strides)
 
 # %%
@@ -278,9 +270,7 @@ params_to_aggregate = [
 per_wb_params = pd.concat(
     [
         per_wb_params,
-        final_strides.reindex(columns=params_to_aggregate)
-        .groupby(["wb_id"])
-        .mean(),
+        final_strides.reindex(columns=params_to_aggregate).groupby(["wb_id"]).mean(),
     ],
     axis=1,
 )
@@ -322,9 +312,7 @@ per_wb_params_mask.T
 # Here, we perform it per recording and calculate a single values from all the WBs.
 from multigait.aggregation._generic_aggregator import GenericAggregator
 
-agg = GenericAggregator(
-    **GenericAggregator.PredefinedParameters.single_day
-)
+agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 agg_results = agg.aggregate(
     per_wb_params, wb_dmos_mask=per_wb_params_mask
 ).aggregated_data_
@@ -338,13 +326,10 @@ print(agg_results.columns)
 # In this aggregation we only take into account all WBs together, without separating them into days or WB durations.
 from multigait.aggregation._lab_aggregator import LaboratoryAggregator
 
-agg = LaboratoryAggregator(
-    **LaboratoryAggregator.PredefinedParameters.single_recording
-)
+agg = LaboratoryAggregator(**LaboratoryAggregator.PredefinedParameters.single_recording)
 agg_results = agg.aggregate(
     per_wb_params, wb_dmos_mask=per_wb_params_mask
 ).aggregated_data_
 agg_results.T
 print(agg_results.T)
 print(agg_results.columns)
-

@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def _to_stride_list_no_lr(ic_list: pd.DataFrame) -> pd.DataFrame:
     """Make start/end stride rows from an ic-only DataFrame.
 
@@ -35,7 +36,9 @@ def strides_list_from_ic_list_no_lrc(ic_list: pd.DataFrame) -> pd.DataFrame:
     """
     # If empty: return empty frame with compatible index/shape
     if ic_list.empty:
-        return pd.DataFrame(columns=["start", "end"], index=ic_list.index).pipe(_unify_stride_list_no_lr)
+        return pd.DataFrame(columns=["start", "end"], index=ic_list.index).pipe(
+            _unify_stride_list_no_lr
+        )
 
     # Ensure sorted by ic and compute consecutive pairs
     return (

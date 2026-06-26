@@ -7,43 +7,43 @@ from multigait.WS.base_ws import BaseWsDetector
 
 class Ws(BaseWsDetector):
     """
-     Walking speed calculator.
+    Walking speed calculator.
 
-     This class computes walking speed (meters per second) from cadence
-     (steps per minute) and stride length (meters) sampled per second.
+    This class computes walking speed (meters per second) from cadence
+    (steps per minute) and stride length (meters) sampled per second.
 
-     Walking speed per second is derived using the relationship:
+    Walking speed per second is derived using the relationship:
 
-         walking_speed_mps = (stride_length_m * cadence_spm) / (60 * 2)
+        walking_speed_mps = (stride_length_m * cadence_spm) / (60 * 2)
 
-     Attributes
-     ----------
-     walking_speed_per_sec_ : pd.DataFrame
-         DataFrame containing walking speed in meters per second at one-second resolution.
+    Attributes
+    ----------
+    walking_speed_per_sec_ : pd.DataFrame
+        DataFrame containing walking speed in meters per second at one-second resolution.
 
-     Other Parameters
-     ----------------
-     data : pd.DataFrame, optional
-         Original dataframe containing sensor or gait event data. Stored for reference.
-     initial_contacts : pd.DataFrame, optional
-         Optional dataframe of detected initial foot contacts. Stored but not used in calculation.
-     cadence_per_sec : pd.DataFrame
-         DataFrame containing cadence at one-second resolution, with column "cadence_spm".
-     stride_length_per_sec : pd.DataFrame
-         DataFrame containing stride length at one-second resolution, with column "stride_length_m".
-     sampling_rate_hz : float
-         Sampling rate of the original signal in Hz. Stored but not used in computation.
+    Other Parameters
+    ----------------
+    data : pd.DataFrame, optional
+        Original dataframe containing sensor or gait event data. Stored for reference.
+    initial_contacts : pd.DataFrame, optional
+        Optional dataframe of detected initial foot contacts. Stored but not used in calculation.
+    cadence_per_sec : pd.DataFrame
+        DataFrame containing cadence at one-second resolution, with column "cadence_spm".
+    stride_length_per_sec : pd.DataFrame
+        DataFrame containing stride length at one-second resolution, with column "stride_length_m".
+    sampling_rate_hz : float
+        Sampling rate of the original signal in Hz. Stored but not used in computation.
 
-     Notes
-     -----
-     Walking speed is computed as:
+    Notes
+    -----
+    Walking speed is computed as:
 
-         walking_speed_mps = (stride_length_m * cadence_spm) / (60 * 2)
+        walking_speed_mps = (stride_length_m * cadence_spm) / (60 * 2)
 
-     - `cadence_spm / 60` converts steps/minute → steps/second
-     - Division by 2 converts steps → strides (1 stride = 2 steps)
-     - Therefore, `(stride_length_m * steps_per_second)` yields meters/second.
-     """
+    - `cadence_spm / 60` converts steps/minute → steps/second
+    - Division by 2 converts steps → strides (1 stride = 2 steps)
+    - Therefore, `(stride_length_m * steps_per_second)` yields meters/second.
+    """
 
     def __init__(self):
         pass
@@ -57,7 +57,6 @@ class Ws(BaseWsDetector):
         stride_length_per_sec: Optional[pd.DataFrame] = None,
         sampling_rate_hz: float = 100,
     ) -> Self:
-
         """
         Compute walking speed (m/s) at one-second resolution.
 
@@ -109,7 +108,9 @@ class Ws(BaseWsDetector):
         if cadence_per_sec is None:
             raise ValueError("cadence_per_sec must be provided for ws calculation")
         if stride_length_per_sec is None:
-            raise ValueError("stride_length_per_sec must be provided for ws calculation")
+            raise ValueError(
+                "stride_length_per_sec must be provided for ws calculation"
+            )
 
         self.data = data
         self.initial_contacts = initial_contacts
@@ -123,11 +124,13 @@ class Ws(BaseWsDetector):
                 f"cadence_per_sec length ({len(cadence_per_sec)}) does not match "
                 f"stride_length_per_sec length ({len(stride_length_per_sec)}). "
                 "Walking speed will be aligned by index, but potential mismatch may affect accuracy.",
-                UserWarning
+                UserWarning,
             )
 
         self.walking_speed_per_sec_ = (
-            self.stride_length_per_sec["stride_length_m"] * self.cadence_per_sec["cadence_spm"] / (60 * 2)
+            self.stride_length_per_sec["stride_length_m"]
+            * self.cadence_per_sec["cadence_spm"]
+            / (60 * 2)
         ).to_frame("walking_speed_mps")
 
         return self

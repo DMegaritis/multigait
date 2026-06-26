@@ -3,8 +3,7 @@ from typing import Literal
 
 
 def detect_zero_crossings(
-    data: np.ndarray,
-    direction: Literal["pos_to_neg", "neg_to_pos", "both"] = "both"
+    data: np.ndarray, direction: Literal["pos_to_neg", "neg_to_pos", "both"] = "both"
 ) -> np.ndarray:
     """
     Detect zero crossings in a numerical array.

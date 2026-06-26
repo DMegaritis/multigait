@@ -77,7 +77,9 @@ class GuIC(BaseIcDetector):
 
     ic_list_: pd.DataFrame
 
-    def __init__(self, *, version: Literal["improved_wrist", "adaptive_wrist"] = "improved_wrist") -> None:
+    def __init__(
+        self, *, version: Literal["improved_wrist", "adaptive_wrist"] = "improved_wrist"
+    ) -> None:
         """
         Initialise the GuIC algorithm for wrist-worn accelerometer data.
 
@@ -91,7 +93,6 @@ class GuIC(BaseIcDetector):
 
         if version not in ["improved_wrist", "adaptive_wrist"]:
             raise ValueError(f"Invalid version: {version}")
-
 
         self.version = version
 
@@ -112,7 +113,6 @@ class GuIC(BaseIcDetector):
 
         self.cont_win_size = 3
         self.cont_thres = 4
-
 
     def detect(self, data: pd.DataFrame, *, sampling_rate_hz: float = 100) -> Self:
         """
@@ -138,7 +138,7 @@ class GuIC(BaseIcDetector):
         self.sampling_rate_hz = sampling_rate_hz
 
         # 1. Euclidean norm of the data
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc_norm = np.linalg.norm(self.data[cols].values, axis=1)
 
         # If SD of acceleration is less than 0.025, return empty dataframe
@@ -178,7 +178,9 @@ class GuIC(BaseIcDetector):
             if check_lock == (half_k):
                 peaks_list.append({"index": peak, "magnitude": acc_norm[peak]})
 
-        peaks = pd.concat([pd.DataFrame([peak]) for peak in peaks_list], ignore_index=True)
+        peaks = pd.concat(
+            [pd.DataFrame([peak]) for peak in peaks_list], ignore_index=True
+        )
 
         # filtering peaks based on magnitude threshold
         peaks = peaks[peaks["magnitude"] > self.mag_thres]
@@ -192,9 +194,13 @@ class GuIC(BaseIcDetector):
             peaks["periodicity"] = peaks["index"].diff()
 
             # filtering peaks based on period_min. Keeping NaN values
-            peaks = peaks[(peaks["periodicity"] > self.period_min) | (peaks["periodicity"].isna())]
+            peaks = peaks[
+                (peaks["periodicity"] > self.period_min) | (peaks["periodicity"].isna())
+            ]
             # filtering peaks based on period_max
-            peaks = peaks[(peaks["periodicity"] < self.period_max) | (peaks["periodicity"].isna())]
+            peaks = peaks[
+                (peaks["periodicity"] < self.period_max) | (peaks["periodicity"].isna())
+            ]
 
             # resetting index after filtering
             peaks.reset_index(drop=True, inplace=True)
@@ -209,7 +215,9 @@ class GuIC(BaseIcDetector):
             # calculating the second difference of peak magnitudes
             peaks["similarity"] = -np.abs(peaks["magnitude"].diff(periods=2))
             # filtering based on similarity threshold
-            peaks = peaks[(peaks["similarity"] > self.sim_thres) | (peaks["similarity"].isna())]
+            peaks = peaks[
+                (peaks["similarity"] > self.sim_thres) | (peaks["similarity"].isna())
+            ]
             # resetting index after filtering
             peaks.reset_index(drop=True, inplace=True)
 
@@ -223,10 +231,14 @@ class GuIC(BaseIcDetector):
             if len(peaks) > 5:
                 end_for = len(peaks) - 1
                 for i in range(self.cont_thres - 1, end_for):
-                    v_count = 0  # counting how many windows were over the variance thres
-                    for x in range(1, self.cont_thres + 1): # selecting windows surrounding the peak
-                        start_idx = int(peaks.iloc[i - x + 1]['index'])
-                        end_idx = int(peaks.iloc[i - x + 2]['index']) + 1
+                    v_count = (
+                        0  # counting how many windows were over the variance thres
+                    )
+                    for x in range(
+                        1, self.cont_thres + 1
+                    ):  # selecting windows surrounding the peak
+                        start_idx = int(peaks.iloc[i - x + 1]["index"])
+                        end_idx = int(peaks.iloc[i - x + 2]["index"]) + 1
 
                         # calculating variance of acceleration between consecutive peak windows
                         acc_var = np.var(acc_norm[start_idx:end_idx], ddof=1)
@@ -234,9 +246,9 @@ class GuIC(BaseIcDetector):
                             v_count += 1
 
                     if v_count >= self.cont_win_size:
-                        peaks.at[i, 'continuity'] = 1
+                        peaks.at[i, "continuity"] = 1
                     else:
-                        peaks.at[i, 'continuity'] = 0
+                        peaks.at[i, "continuity"] = 0
 
                 # filtering continuity, keeping only 1s and NAs (since NAs have not been tested and we dont want to miss ICs)
                 peaks = peaks[(peaks["continuity"] == 1) | (peaks["continuity"].isna())]

@@ -3,12 +3,8 @@ from multigait.GSD.utils.merge_bouts import merge_bouts
 from multigait.GSD.utils.cwb import cwb
 from multigait.GSD.base_gsd import BaseGsdDetector
 import pandas as pd
-import  numpy as np
-from mobgap.data_transform import (
-    chain_transformers,
-    GaussianFilter,
-    ButterworthFilter
-)
+import numpy as np
+from mobgap.data_transform import chain_transformers, GaussianFilter, ButterworthFilter
 
 
 class MacLeanGSD(BaseGsdDetector):
@@ -18,28 +14,28 @@ class MacLeanGSD(BaseGsdDetector):
     It identifies walking bouts by applying filtering, thresholding, and bout-merging
     steps to 3-axis accelerometer signals.
 
-    The wrist implementation follows the structure of the original algorithm 
+    The wrist implementation follows the structure of the original algorithm
     but uses fixed thresholds tuned for wrist signals. The main steps are:
 
-    1. Preprocessing: A 4th-order zero-lag low-pass Butterworth filter 
-       (cutoff 0.25 Hz) is applied to remove high-frequency noise. 
-       The filtered signal is subtracted from the raw data to preserve 
+    1. Preprocessing: A 4th-order zero-lag low-pass Butterworth filter
+       (cutoff 0.25 Hz) is applied to remove high-frequency noise.
+       The filtered signal is subtracted from the raw data to preserve
        movement-related frequencies.
 
-    2. Magnitude calculation: The vector norm (3D Euclidean norm) of the 
+    2. Magnitude calculation: The vector norm (3D Euclidean norm) of the
        acceleration is computed to produce a single magnitude signal.
 
     3. Activity detection: A binary threshold is applied
-       to the magnitude signal. Points above threshold are marked active (1), 
-       below threshold inactive (0). This binary activity signal is smoothed 
+       to the magnitude signal. Points above threshold are marked active (1),
+       below threshold inactive (0). This binary activity signal is smoothed
        with a Gaussian-weighted moving average.
 
-    4. Bout segmentation: Start and end points of candidate walking bouts 
+    4. Bout segmentation: Start and end points of candidate walking bouts
        are identified. Gaps shorter than the threshold are merged with neighboring bouts.
 
-    5. Walking classification: Each bout is validated by comparing the 
+    5. Walking classification: Each bout is validated by comparing the
        smoothed magnitude against a walking threshold.
-       If fewer than 5% of points exceed this threshold, the bout is 
+       If fewer than 5% of points exceed this threshold, the bout is
        classified as walking.
 
     6. Post-processing: Bouts shorter than 2 seconds are discarded.
@@ -48,14 +44,14 @@ class MacLeanGSD(BaseGsdDetector):
     Attributes
     ----------
     gs_list_ : pandas.DataFrame
-        DataFrame containing the start and end times of detected gait 
+        DataFrame containing the start and end times of detected gait
         sequences. Each sequence is labeled with a unique `gs_id` index.
 
     Notes
     -----
     - Filters and thresholds are designed for 100 Hz data. Resampling is
       required for other sampling rates.
-    - Orientation correction steps from the original MATLAB implementation 
+    - Orientation correction steps from the original MATLAB implementation
       are omitted.
     - The order of the steps are similar but the implementation is slightly difference, simplified, and computationally more efficient.
     Lowback:
@@ -68,14 +64,25 @@ class MacLeanGSD(BaseGsdDetector):
     References
     ----------
     [1] MacLean, M. K., Rehman, R. Z. U., Kerse, N., Taylor, L., Rochester, L.,
-        & Del Din, S. (2023). Walking Bout Detection for People Living in Long 
-        Residential Care: A Computationally Efficient Algorithm for a 3-Axis 
-        Accelerometer on the Lower Back. Sensors, 23(21), 8973. 
+        & Del Din, S. (2023). Walking Bout Detection for People Living in Long
+        Residential Care: A Computationally Efficient Algorithm for a 3-Axis
+        Accelerometer on the Lower Back. Sensors, 23(21), 8973.
         https://doi.org/10.3390/s23218973
     """
 
-    def __init__(self, *, sampling_rate_hz: float = 100, version: Literal["original_lowback", "improved_lowback", "adaptive_lowback", "original_personalised_lowback", "wrist"] = "wrist", cwb: bool = True) -> None:
-
+    def __init__(
+        self,
+        *,
+        sampling_rate_hz: float = 100,
+        version: Literal[
+            "original_lowback",
+            "improved_lowback",
+            "adaptive_lowback",
+            "original_personalised_lowback",
+            "wrist",
+        ] = "wrist",
+        cwb: bool = True,
+    ) -> None:
         """
         Initialize the class.
 
@@ -88,8 +95,16 @@ class MacLeanGSD(BaseGsdDetector):
             Whether to create Continuous Walking Bouts (CWB) from micro walking bouts (default is True). The pipeline should only be run with CWB.
         """
 
-        if version not in ("original_lowback", "improved_lowback", "adaptive_lowback", "original_personalised_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', 'adaptive_lowback', 'original_personalised_lowback', 'wrist'.")
+        if version not in (
+            "original_lowback",
+            "improved_lowback",
+            "adaptive_lowback",
+            "original_personalised_lowback",
+            "wrist",
+        ):
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', 'adaptive_lowback', 'original_personalised_lowback', 'wrist'."
+            )
 
         self.sampling_rate_hz = sampling_rate_hz
         self.version = version
@@ -143,14 +158,23 @@ class MacLeanGSD(BaseGsdDetector):
         self.data = data
 
         # selecting only the accelerometer data
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc = self.data[cols]
 
         # Performing a low pass butterworth filter
         cutoff = 0.25
         # class instance
-        filter_chain = [("butter", ButterworthFilter(order=4, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
-        acc_filt = chain_transformers(acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
+        filter_chain = [
+            (
+                "butter",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                ),
+            )
+        ]
+        acc_filt = chain_transformers(
+            acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+        )
 
         # subtracting the filtered from the original signal
         minusacc = acc - acc_filt
@@ -162,9 +186,13 @@ class MacLeanGSD(BaseGsdDetector):
         if self.version == "original_personalised_lowback":
             self.threshold_binary = np.median(magnitude)
         if self.version == "adaptive_lowback":
-            self.threshold_binary = np.percentile(magnitude, self.threshold_binary_percentile)
+            self.threshold_binary = np.percentile(
+                magnitude, self.threshold_binary_percentile
+            )
             self.gap_threshold = np.percentile(magnitude, self.gap_threshold_percentile)
-            self.walk_threshold = np.percentile(magnitude, self.walk_threshold_percentile)
+            self.walk_threshold = np.percentile(
+                magnitude, self.walk_threshold_percentile
+            )
 
         # finding datapoint above the threshold (1) or below (0)
         magnitude_thresh = (magnitude > self.threshold_binary).astype(int)
@@ -184,7 +212,7 @@ class MacLeanGSD(BaseGsdDetector):
         # if end and start are empty then we shortcut since no gait was detected
         if start.size == 0 or end.size == 0:
             self.gs_list_ = pd.DataFrame(columns=["start", "end"])
-            self.gs_list_.index.name = 'gs_id'
+            self.gs_list_.index.name = "gs_id"
             return self
 
         # if the first end is before the first start we start the walking bout from the beginning of the file
@@ -195,18 +223,30 @@ class MacLeanGSD(BaseGsdDetector):
             end = np.append(end, len(mtdiff))
 
         # smoothing binary data, sigma has been selected from comparisons with matlab which does not have a sigma parameter (it is calculated internally)
-        filter_chain = [("gaussian_1", GaussianFilter(sigma_s=10 / self.sampling_rate_hz))]
-        smoothed_data = np.asarray(chain_transformers(magnitude_thresh.astype(float), filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [
+            ("gaussian_1", GaussianFilter(sigma_s=10 / self.sampling_rate_hz))
+        ]
+        smoothed_data = np.asarray(
+            chain_transformers(
+                magnitude_thresh.astype(float),
+                filter_chain,
+                sampling_rate_hz=self.sampling_rate_hz,
+            )
+        )
 
         # gapindex includes end of each bout and start of the next
         # and a column to store the sum of the smoothed data below the threshold
-        gapindex = np.column_stack((end[:-1], start[1:], np.zeros(len(start) - 1, dtype=int)))
+        gapindex = np.column_stack(
+            (end[:-1], start[1:], np.zeros(len(start) - 1, dtype=int))
+        )
 
         # iterating through each gap to make checks
-        gapindex[:, 2] = np.array([
-            np.sum(smoothed_data[start:end] < self.gap_threshold)
-            for start, end in zip(gapindex[:, 0], gapindex[:, 1])
-        ])
+        gapindex[:, 2] = np.array(
+            [
+                np.sum(smoothed_data[start:end] < self.gap_threshold)
+                for start, end in zip(gapindex[:, 0], gapindex[:, 1])
+            ]
+        )
 
         # identifying invalid gaps (i.e., gaps which should be included as walking bouts)
         # using the threshold indicating the number of data points below which a gap is invalid
@@ -221,22 +261,35 @@ class MacLeanGSD(BaseGsdDetector):
         valid_wb_indices = []
 
         # we need to merge the detected bouts starts and ends with the gaps which include activity
-        merged_starts, merged_ends = merge_bouts(start, end, boutstarts_notinactive, boutends_notinactive)
+        merged_starts, merged_ends = merge_bouts(
+            start, end, boutstarts_notinactive, boutends_notinactive
+        )
 
         # gaussian filter in the euclidian norm signal
-        filter_chain = [("gaussian_1", GaussianFilter(sigma_s=2 / self.sampling_rate_hz))]
-        magnitude_smooth = np.asarray(chain_transformers(magnitude, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [
+            ("gaussian_1", GaussianFilter(sigma_s=2 / self.sampling_rate_hz))
+        ]
+        magnitude_smooth = np.asarray(
+            chain_transformers(
+                magnitude, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # Having all the walking bouts (originating from the detected starts and ends merged with the invalid gaps)
         # we perform a check to see if the signal exceeds a threshold for a specific number of data points
         # in order to reduce computational resources we calculate the walk_index_values value for each walking bout outside of the loop
         # walk_index_values is the limit based on the walk_index
-        walk_index_values = np.round((merged_ends - merged_starts) * self.walk_index).astype(int)
+        walk_index_values = np.round(
+            (merged_ends - merged_starts) * self.walk_index
+        ).astype(int)
 
         for i in range(len(merged_starts)):
             # extracting the smoothed magnitude data for each walking bout and
             # determining if the data exceeds the threshold
-            dt_thresh_bout = (magnitude_smooth[merged_starts[i]:merged_ends[i]] > self.walk_threshold).astype(int)
+            dt_thresh_bout = (
+                magnitude_smooth[merged_starts[i] : merged_ends[i]]
+                > self.walk_threshold
+            ).astype(int)
 
             # if the data exceeds the threshold for less than walk_index_values points (5% of the bout length), we include the bout
             # using precomputed walk_index_values values rather than calculating them on the fly in each loop
@@ -262,9 +315,9 @@ class MacLeanGSD(BaseGsdDetector):
         # creating a dataframe with the final start and end of the walking bouts
         gs = pd.DataFrame({"start": final_wb_start, "end": final_wb_end})
         # setting the index name
-        gs.index.name = 'gs_id'
+        gs.index.name = "gs_id"
         # Clipping start and end to be within limits of file
-        gs[['start', 'end']] = np.clip(gs[['start', 'end']], 0, len(self.data))
+        gs[["start", "end"]] = np.clip(gs[["start", "end"]], 0, len(self.data))
 
         # Creating Continuous Walking Bouts from micro walking bouts
         if self.cwb:

@@ -54,7 +54,9 @@ class MultiGroupBy:
 
         primary_index_cols = primary_df.index.names
         if not set(groupby_as_list).issubset(primary_index_cols):
-            raise ValueError("All `groupby` columns need to be in the index of all dataframes.")
+            raise ValueError(
+                "All `groupby` columns need to be in the index of all dataframes."
+            )
 
         self.primary_df = primary_df
         self.secondary_dfs = secondary_dfs
@@ -69,7 +71,9 @@ class MultiGroupBy:
         This is the grouper created from the primary dataframe.
         """
         if not hasattr(self, "_primary_groupby"):
-            self._primary_groupby = self.primary_df.groupby(level=self.groupby, **self._kwargs)
+            self._primary_groupby = self.primary_df.groupby(
+                level=self.groupby, **self._kwargs
+            )
         return self._primary_groupby
 
     @property
@@ -79,12 +83,18 @@ class MultiGroupBy:
         These are the groupers created from the secondary dataframes.
         """
         if not hasattr(self, "_secondary_groupbys"):
-            self._secondary_groupbys = [df.groupby(level=self.groupby, **self._kwargs) for df in self.secondary_dfs]
+            self._secondary_groupbys = [
+                df.groupby(level=self.groupby, **self._kwargs)
+                for df in self.secondary_dfs
+            ]
         return self._secondary_groupbys
 
-    def _get_secondary_vals(self, name: Union[str, tuple[str, ...]]) -> list[pd.DataFrame]:
+    def _get_secondary_vals(
+        self, name: Union[str, tuple[str, ...]]
+    ) -> list[pd.DataFrame]:
         return [
-            _get_group_with_empty_fallback(g, df, name) for g, df in zip(self.secondary_groupbys, self.secondary_dfs)
+            _get_group_with_empty_fallback(g, df, name)
+            for g, df in zip(self.secondary_groupbys, self.secondary_dfs)
         ]
 
     def get_group(self, name: Union[str, tuple[str, ...]]) -> tuple[pd.DataFrame, ...]:
@@ -118,7 +128,9 @@ class MultiGroupBy:
         """Iterate over the groups and return a tuple with the group name and the group dataframes."""
         return ((name, self.get_group(name)) for name, _ in self.primary_groupby)
 
-    def apply(self, func: Callable, *args: Unpack[list[Any]], **kwargs: Unpack[dict[str, Any]]) -> pd.DataFrame:
+    def apply(
+        self, func: Callable, *args: Unpack[list[Any]], **kwargs: Unpack[dict[str, Any]]
+    ) -> pd.DataFrame:
         """Apply a function that takes the group values from each df as input.
 
         The function is expected to take n dataframes as input, where n is the number of secondary dataframes + 1.
@@ -127,7 +139,9 @@ class MultiGroupBy:
 
         """
 
-        def _nested_func(group: pd.DataFrame, *iargs: Any, **ikwargs: Unpack[dict[str, Any]]) -> Any:
+        def _nested_func(
+            group: pd.DataFrame, *iargs: Any, **ikwargs: Unpack[dict[str, Any]]
+        ) -> Any:
             secondary_vals = self._get_secondary_vals(group.name)
             return func(group, *secondary_vals, *iargs, **ikwargs)
 
@@ -262,7 +276,9 @@ class MissingDataColumnsError(ValueError):
 
 
 def _get_data_from_identifier(
-    df: pd.DataFrame, identifier: Union[Hashable, Sequence, str, None], num_levels: Union[int, None] = 1
+    df: pd.DataFrame,
+    identifier: Union[Hashable, Sequence, str, None],
+    num_levels: Union[int, None] = 1,
 ) -> pd.DataFrame:
     if identifier is None:
         return df
@@ -273,13 +289,17 @@ def _get_data_from_identifier(
     if num_levels:
         data_num_levels = 1 if isinstance(data, pd.Series) else data.columns.nlevels
         if data_num_levels != num_levels:
-            raise ValueError(f"Data selected by '{identifier}' must have {num_levels} level(s).")
+            raise ValueError(
+                f"Data selected by '{identifier}' must have {num_levels} level(s)."
+            )
     return data
 
 
 def apply_transformations(  # noqa: C901, PLR0912
     df: pd.DataFrame,
-    transformations: list[Union[tuple[str, Union[callable, list[callable]]], CustomOperation]],
+    transformations: list[
+        Union[tuple[str, Union[callable, list[callable]]], CustomOperation]
+    ],
     *,
     missing_columns: Literal["raise", "ignore", "warn"] = "warn",
 ) -> pd.DataFrame:
@@ -403,7 +423,10 @@ def apply_transformations(  # noqa: C901, PLR0912
         # This should be a normal index not mutliindex
         transformation_results.columns = pd.Index(column_names)
         return transformation_results
-    column_names = [col_name if isinstance(col_name, tuple) else (col_name,) for col_name in column_names]
+    column_names = [
+        col_name if isinstance(col_name, tuple) else (col_name,)
+        for col_name in column_names
+    ]
     try:
         transformation_results.columns = pd.MultiIndex.from_tuples(column_names)
     except ValueError as e:
@@ -420,7 +443,11 @@ def apply_aggregations(
     df: pd.DataFrame,
     aggregations: list[
         Union[
-            tuple[Union[str, tuple[str, ...]], Union[Union[callable, str], list[Union[callable, str]]]], CustomOperation
+            tuple[
+                Union[str, tuple[str, ...]],
+                Union[Union[callable, str], list[Union[callable, str]]],
+            ],
+            CustomOperation,
         ]
     ],
     *,
@@ -485,7 +512,9 @@ def apply_aggregations(
     At the end the results will be concatenated.
 
     """
-    manual_aggregations, agg_aggregations = _collect_manual_and_agg_aggregations(aggregations)
+    manual_aggregations, agg_aggregations = _collect_manual_and_agg_aggregations(
+        aggregations
+    )
 
     # apply built-in aggregations
     agg_aggregation_results = []
@@ -493,17 +522,25 @@ def apply_aggregations(
         try:
             aggregation_result = df.agg({key: aggregation})
             agg_aggregation_results.append(
-                aggregation_result.stack(level=np.arange(df.columns.nlevels).tolist(), future_stack=True)
+                aggregation_result.stack(
+                    level=np.arange(df.columns.nlevels).tolist(), future_stack=True
+                )
             )
         except KeyError as e:
             if missing_columns == "raise":
                 raise MissingDataColumnsError(key) from e
             if missing_columns == "warn":
-                warnings.warn(str(MissingDataColumnsError(key)), UserWarning, stacklevel=1)
+                warnings.warn(
+                    str(MissingDataColumnsError(key)), UserWarning, stacklevel=1
+                )
             continue
-    agg_aggregation_results = pd.concat(agg_aggregation_results) if agg_aggregation_results else pd.Series()
+    agg_aggregation_results = (
+        pd.concat(agg_aggregation_results) if agg_aggregation_results else pd.Series()
+    )
 
-    manual_aggregation_results = _apply_manual_aggregations(df, manual_aggregations, missing_columns)
+    manual_aggregation_results = _apply_manual_aggregations(
+        df, manual_aggregations, missing_columns
+    )
 
     # if only one type of aggregation was applied, return the result directly
     if manual_aggregations and not agg_aggregations:
@@ -513,13 +550,17 @@ def apply_aggregations(
 
     # otherwise, concatenate the results
     try:
-        _check_number_of_index_levels([agg_aggregation_results, manual_aggregation_results])
+        _check_number_of_index_levels(
+            [agg_aggregation_results, manual_aggregation_results]
+        )
     except ValueError as e:
         raise ValueError(
             "The aggregation results from automatic and custom aggregation could not be concatenated. "
             "This is likely caused by an inconsistent number index levels in them."
         ) from e
-    aggregation_results = pd.concat([agg_aggregation_results, manual_aggregation_results])
+    aggregation_results = pd.concat(
+        [agg_aggregation_results, manual_aggregation_results]
+    )
 
     return aggregation_results
 
@@ -527,7 +568,11 @@ def apply_aggregations(
 def _collect_manual_and_agg_aggregations(
     aggregations: list[
         Union[
-            tuple[Union[str, tuple[str, ...]], Union[Union[callable, str], list[Union[callable, str]]]], CustomOperation
+            tuple[
+                Union[str, tuple[str, ...]],
+                Union[Union[callable, str], list[Union[callable, str]]],
+            ],
+            CustomOperation,
         ]
     ],
 ) -> tuple[list[CustomOperation], dict[tuple[str, str], list[Union[str, Callable]]]]:
@@ -553,7 +598,9 @@ def _collect_manual_and_agg_aggregations(
             # agg function only accepts strings as identifiers for one-level columns
             if isinstance(key, tuple) and len(key) == 1:
                 key = key[0]
-            if not isinstance(key, (tuple, str)) or not all(isinstance(k, str) for k in key):
+            if not isinstance(key, (tuple, str)) or not all(
+                isinstance(k, str) for k in key
+            ):
                 raise ValueError(
                     f"The key {key} has an invalid type. "
                     "It must either be a valid column name or a tuple of column names."
@@ -581,7 +628,9 @@ def _construct_index_from_col_name(col_name: Union[tuple[str, ...], str]) -> pd.
 
 
 def _apply_manual_aggregations(  # noqa: C901
-    df: pd.DataFrame, manual_aggregations: list[CustomOperation], missing_columns: Literal["raise", "ignore", "warn"]
+    df: pd.DataFrame,
+    manual_aggregations: list[CustomOperation],
+    missing_columns: Literal["raise", "ignore", "warn"],
 ) -> pd.Series:
     # apply manual aggregations
     manual_aggregation_results = []
@@ -611,10 +660,14 @@ def _apply_manual_aggregations(  # noqa: C901
                     "The number of column names provided does not match the number of results returned by the function."
                 )
             for col_name, res in zip(agg.column_name, result):
-                manual_aggregation_results.append(pd.Series([res], index=_construct_index_from_col_name(col_name)))
+                manual_aggregation_results.append(
+                    pd.Series([res], index=_construct_index_from_col_name(col_name))
+                )
         else:
             manual_aggregation_results.append(
-                pd.Series([result], index=_construct_index_from_col_name(agg.column_name))
+                pd.Series(
+                    [result], index=_construct_index_from_col_name(agg.column_name)
+                )
             )
     if len(manual_aggregation_results) == 0:
         return pd.Series()
@@ -629,7 +682,9 @@ def _apply_manual_aggregations(  # noqa: C901
     return pd.concat(manual_aggregation_results)
 
 
-def _check_number_of_index_levels(agg_results: list[Union[pd.Series, pd.DataFrame]]) -> None:
+def _check_number_of_index_levels(
+    agg_results: list[Union[pd.Series, pd.DataFrame]],
+) -> None:
     n_levels = [result.index.nlevels for result in agg_results]
     if len(set(n_levels)) > 1:
         raise ValueError(
@@ -665,7 +720,10 @@ def cut_into_overlapping_bins(
     """
     # Create a list to store rows for the new DataFrame
     col_of_interest = df[column]
-    groups = {key: df[(col_of_interest > val[0]) & (col_of_interest <= val[1])] for key, val in interval_dict.items()}
+    groups = {
+        key: df[(col_of_interest > val[0]) & (col_of_interest <= val[1])]
+        for key, val in interval_dict.items()
+    }
 
     return (
         pd.concat(groups, names=["bin", *df.index.names])
@@ -675,7 +733,9 @@ def cut_into_overlapping_bins(
 
 
 def multilevel_groupby_apply_merge(
-    df: pd.DataFrame, groupbys: list[tuple[Union[str, list[str]], Callable]], **apply_kwargs: Any
+    df: pd.DataFrame,
+    groupbys: list[tuple[Union[str, list[str]], Callable]],
+    **apply_kwargs: Any,
 ) -> pd.DataFrame:
     """Apply multiple groupby operations and merge the results.
 
@@ -697,7 +757,10 @@ def multilevel_groupby_apply_merge(
     pd.DataFrame
         A DataFrame containing the results of the groupby operations.
     """
-    results = [df.groupby(key).apply(func, include_groups=False, **apply_kwargs) for key, func in groupbys]
+    results = [
+        df.groupby(key).apply(func, include_groups=False, **apply_kwargs)
+        for key, func in groupbys
+    ]
     return pd.concat(results, axis=1) if results else pd.DataFrame()
 
 

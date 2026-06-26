@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 def auto_cov_unbiased(x: np.ndarray) -> np.ndarray:
     """
@@ -17,7 +17,7 @@ def auto_cov_unbiased(x: np.ndarray) -> np.ndarray:
     """
     n = len(x)
     x_centred = x - np.mean(x)
-    ac = np.correlate(x_centred, x_centred, mode='full')
+    ac = np.correlate(x_centred, x_centred, mode="full")
 
     # Create lags from -n+1 to n-1
     lags = np.arange(-n + 1, n)

@@ -62,7 +62,9 @@ class StrideFiltering(Algorithm):
                 "rules": [
                     (
                         "stride_duration_thres",
-                        IntervalDurationCriteria(min_duration_s=0.2, max_duration_s=3.0),
+                        IntervalDurationCriteria(
+                            min_duration_s=0.2, max_duration_s=3.0
+                        ),
                     ),
                 ],
                 "incompatible_rules": "warn",
@@ -111,7 +113,9 @@ class StrideFiltering(Algorithm):
         # Validate rules are of expected type
         for _, rule in self.rules or []:
             if not isinstance(rule, BaseIntervalCriteria):
-                raise TypeError("All rules must be instances of `IntervalSummaryCriteria` or one of its child classes.")
+                raise TypeError(
+                    "All rules must be instances of `IntervalSummaryCriteria` or one of its child classes."
+                )
 
         # Keep an internal copy to avoid accidental external mutation
         self.stride_list = stride_list.copy()
@@ -128,16 +132,21 @@ class StrideFiltering(Algorithm):
             if changed_mask.any():
                 n_changed = int(changed_mask.sum())
                 logger.warning(
-                    "StrideFiltering: clipped %d stride_length_m values to the [0.15, 2.0] m range.", n_changed
+                    "StrideFiltering: clipped %d stride_length_m values to the [0.15, 2.0] m range.",
+                    n_changed,
                 )
                 # Apply clipped values only where they changed
-                self.stride_list.loc[changed_mask, "stride_length_m"] = clipped[changed_mask]
+                self.stride_list.loc[changed_mask, "stride_length_m"] = clipped[
+                    changed_mask
+                ]
 
         # If there are no rules or empty input, create trivial outputs (all pass)
         if self.rules is None or len(self.rules) == 0 or stride_list.empty:
             # All strides pass
             self.pass_mask_ = pd.Series(True, index=stride_list.index)
-            self._exclusion_reasons = pd.DataFrame(columns=["rule_name", "rule_obj"]).reindex(stride_list.index)
+            self._exclusion_reasons = pd.DataFrame(
+                columns=["rule_name", "rule_obj"]
+            ).reindex(stride_list.index)
             self.check_results_ = pd.DataFrame(index=stride_list.index)
             return self
 
@@ -157,12 +166,16 @@ class StrideFiltering(Algorithm):
                     logger.warning(msg + " Skipping rule.")
                 # if "skip", do nothing
                 continue
-            rule_results[name] = rule.check_multiple(self.stride_list, sampling_rate_hz=sampling_rate_hz)
+            rule_results[name] = rule.check_multiple(
+                self.stride_list, sampling_rate_hz=sampling_rate_hz
+            )
 
         # If no rules could be applied, mark all as pass
         if len(rule_results) == 0:
             self.pass_mask_ = pd.Series(True, index=stride_list.index)
-            self._exclusion_reasons = pd.DataFrame(columns=["rule_name", "rule_obj"]).reindex(stride_list.index)
+            self._exclusion_reasons = pd.DataFrame(
+                columns=["rule_name", "rule_obj"]
+            ).reindex(stride_list.index)
             self.check_results_ = pd.DataFrame(index=stride_list.index)
             return self
 

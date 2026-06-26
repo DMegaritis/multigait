@@ -1,57 +1,61 @@
 import warnings
 from typing_extensions import Self, Literal
 import pandas as pd
-import  numpy as np
+import numpy as np
 from scipy.signal import welch, correlate, find_peaks
 from multigait.utils.array import create_sliding_windows
 from multigait.GSD.utils.cwb import cwb
 from multigait.GSD.base_gsd import BaseGsdDetector
-from mobgap.data_transform import (
-    chain_transformers,
-    ButterworthFilter
-)
+from mobgap.data_transform import chain_transformers, ButterworthFilter
 
 
 class KerenGSD(BaseGsdDetector):
     """
-    Implementation of the Gait Sequence Detection (GSD) algorithm for wrist-worn accelerometer data, 
-    based on Keren et al. (2021) [1]_. The algorithm detects walking bouts from 3-axis acceleration 
+    Implementation of the Gait Sequence Detection (GSD) algorithm for wrist-worn accelerometer data,
+    based on Keren et al. (2021) [1]_. The algorithm detects walking bouts from 3-axis acceleration
     by applying a sequence of preprocessing, spectral, and regularity checks.
 
     Two optimised variants are provided:
     - **"original_wrist" (fixed thresholds)**: uses fixed the threshold form the original publication.
     - **"improved_wrist" (fixed thresholds)**: uses fixed fine-tuned threshold in people with multimorbidity.
-    - **"wrist_adaptive" (adaptive thresholds)**: thresholds are set adaptively based on the percentile of 
-      the detrended acceleration distribution.  
+    - **"wrist_adaptive" (adaptive thresholds)**: thresholds are set adaptively based on the percentile of
+      the detrended acceleration distribution.
 
     The granularity of the implementation is 1 second.
 
     Steps of the algorithm:
-    1. **Data Preprocessing**: compute Euclidean norm, apply low-pass filtering, detrend.  
-    2. **Peak Detection**: detect peaks above threshold.  
-    3. **Windowing**: segment into 6 s windows with 5 s overlap.  
-    4. **Standard Deviation**: check variability in each window.  
-    5. **Power Spectral Density (PSD)**: verify dominant frequency lies in walking range (0.5–3 Hz).  
-    6. **Autocorrelation**: assess step/stride regularity (>0.15).  
-    7. **Combining Conditions**: retain windows meeting all conditions, merge into walking bouts.  
+    1. **Data Preprocessing**: compute Euclidean norm, apply low-pass filtering, detrend.
+    2. **Peak Detection**: detect peaks above threshold.
+    3. **Windowing**: segment into 6 s windows with 5 s overlap.
+    4. **Standard Deviation**: check variability in each window.
+    5. **Power Spectral Density (PSD)**: verify dominant frequency lies in walking range (0.5–3 Hz).
+    6. **Autocorrelation**: assess step/stride regularity (>0.15).
+    7. **Combining Conditions**: retain windows meeting all conditions, merge into walking bouts.
 
     Notes
     -----
     - The algorithm discards the first and last 3 seconds of data due to windowing.
-    - Designed for 100–128 Hz sampling rates. Resampling is required if a different rate is used.  
+    - Designed for 100–128 Hz sampling rates. Resampling is required if a different rate is used.
     - The adaptive version may improve generalisation across heterogeneous datasets.
     - The pipeline should be used with the cwb option True (default).
 
     References
     ----------
-    [1] Keren K, Busse M, Fritz NE, Muratori LM, Gazit E, Hillel I, Scheinowitz M, 
-    Gurevich T, Inbar N, Omer N, Hausdorff JM, Quinn L. 
-    Quantification of Daily-Living Gait Quantity and Quality Using a Wrist-Worn Accelerometer 
-    in Huntington's Disease. *Front Neurol*. 2021;12:719442. 
+    [1] Keren K, Busse M, Fritz NE, Muratori LM, Gazit E, Hillel I, Scheinowitz M,
+    Gurevich T, Inbar N, Omer N, Hausdorff JM, Quinn L.
+    Quantification of Daily-Living Gait Quantity and Quality Using a Wrist-Worn Accelerometer
+    in Huntington's Disease. *Front Neurol*. 2021;12:719442.
     doi: 10.3389/fneur.2021.719442
     """
 
-    def __init__(self, *, version: Literal["original_wrist", "improved_wrist", "adaptive_wrist"] = "improved_wrist", cwb: bool=True):
+    def __init__(
+        self,
+        *,
+        version: Literal[
+            "original_wrist", "improved_wrist", "adaptive_wrist"
+        ] = "improved_wrist",
+        cwb: bool = True,
+    ):
         """
         Initialise the GSD algorithm.
 
@@ -66,7 +70,9 @@ class KerenGSD(BaseGsdDetector):
         """
 
         if version not in ("original_wrist", "improved_wrist", "adaptive_wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_wrist', 'improved_wrist', 'adaptive_wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_wrist', 'improved_wrist', 'adaptive_wrist'."
+            )
 
         self.version = version
         self.cwb = cwb
@@ -110,22 +116,32 @@ class KerenGSD(BaseGsdDetector):
 
         # check if the signal is long enough for windowing, if not return empty array
         if len(self.data) < self.window_size * self.sampling_rate_hz:
-            warnings.warn("The signal is too short for windowing. Returning empty gait sequence list.", stacklevel=1)
+            warnings.warn(
+                "The signal is too short for windowing. Returning empty gait sequence list.",
+                stacklevel=1,
+            )
             self.gs_list_ = pd.DataFrame(columns=["start", "end"])
-            self.gs_list_.index.name = 'gs_id'
+            self.gs_list_.index.name = "gs_id"
             return self
 
-
         # 1. calculating the eucledean norm of the data
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc_norm = np.linalg.norm(self.data[cols].values, axis=1)
 
         # 2. low pass butterworth filter
         cutoff = 15
         # class instance
-        filter_chain = [("butter", ButterworthFilter(order=4, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
-        acc_filt = chain_transformers(acc_norm, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
-
+        filter_chain = [
+            (
+                "butter",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                ),
+            )
+        ]
+        acc_filt = chain_transformers(
+            acc_norm, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+        )
 
         # 3. removing DC component
         acc_detrend = acc_filt - np.mean(acc_filt)
@@ -140,29 +156,33 @@ class KerenGSD(BaseGsdDetector):
 
         if len(peaks) == 0:
             self.gs_list_ = pd.DataFrame(columns=["start", "end"])
-            self.gs_list_.index.name = 'gs_id'
+            self.gs_list_.index.name = "gs_id"
             return self
 
         binary_peaks_thresh = np.zeros_like(acc_detrend, dtype=int)
         binary_peaks_thresh[peaks] = 1
 
-
         # 5. dividing signal into windows with a duration of 6 seconds, with 5-second overlap
         window_size_samples = self.window_size * self.sampling_rate_hz
         overlap_samples = self.overlap * self.sampling_rate_hz
-        windows = create_sliding_windows(acc_detrend, window_size_samples, overlap_samples)
+        windows = create_sliding_windows(
+            acc_detrend, window_size_samples, overlap_samples
+        )
 
         # checking the presence of at least one peak in the center second of each window (using step 4)
-        binary_peak_thresh_windows = create_sliding_windows(binary_peaks_thresh, window_size_samples, overlap_samples)
+        binary_peak_thresh_windows = create_sliding_windows(
+            binary_peaks_thresh, window_size_samples, overlap_samples
+        )
         # defining start and end of center second
-        center = int(self.window_size*self.sampling_rate_hz / 2)
+        center = int(self.window_size * self.sampling_rate_hz / 2)
         center_range = int(self.sampling_rate_hz / 2)
-        center_seconds_start = center-center_range
-        center_seconds_end = center+center_range
+        center_seconds_start = center - center_range
+        center_seconds_end = center + center_range
         # check presence of peaks in the center seconds of each window
-        binary_peak_presence = np.any(binary_peak_thresh_windows[:, center_seconds_start:center_seconds_end],
-                                      axis=1).astype(int)
-
+        binary_peak_presence = np.any(
+            binary_peak_thresh_windows[:, center_seconds_start:center_seconds_end],
+            axis=1,
+        ).astype(int)
 
         # 6. calculating the standard deviation in each window
         std = np.std(windows, axis=1)
@@ -171,12 +191,13 @@ class KerenGSD(BaseGsdDetector):
         # two separate numbers to allow for fine tunning in the future
         binary_std_thresh = (std > self.threshold_sd).astype(int)
 
-
         # 7. compute Power Spectral Density (PSD) using Welch's method
         freq_results = []
 
         for window in windows:
-            f, Pxx = welch(window, fs=self.sampling_rate_hz, window='hamming', nperseg=len(window))
+            f, Pxx = welch(
+                window, fs=self.sampling_rate_hz, window="hamming", nperseg=len(window)
+            )
 
             # finding the frequency with the highest power
             max_power_idx = np.argmax(Pxx)  # index of max power
@@ -185,11 +206,12 @@ class KerenGSD(BaseGsdDetector):
             freq_results.append(max_freq)
 
         # converting to pd DataFrame
-        psd_df = pd.DataFrame({'Max_Freq': freq_results})
+        psd_df = pd.DataFrame({"Max_Freq": freq_results})
 
         # creating binary signal based on
-        binary_psd_thresh = np.array(((psd_df['Max_Freq'] > 0.5) & (psd_df['Max_Freq'] < 3)).astype(int))
-
+        binary_psd_thresh = np.array(
+            ((psd_df["Max_Freq"] > 0.5) & (psd_df["Max_Freq"] < 3)).astype(int)
+        )
 
         # 8. Perform autocorrelation analysis for regularity
         # here we apply regularity check to both steps and strides as original paper does not specify which one
@@ -197,8 +219,8 @@ class KerenGSD(BaseGsdDetector):
 
         for window in windows:
             # Compute autocorrelation
-            autocorr = correlate(window, window, mode='full')
-            autocorr = autocorr[autocorr.size // 2:]  # keeping positive lags
+            autocorr = correlate(window, window, mode="full")
+            autocorr = autocorr[autocorr.size // 2 :]  # keeping positive lags
 
             # Normalise (so value at zero lag is 1)
             autocorr = autocorr / autocorr[0]
@@ -214,7 +236,10 @@ class KerenGSD(BaseGsdDetector):
                 step_regularity = autocorr[step_peak_idx]
                 stride_regularity = autocorr[stride_peak_idx]
             else:
-                step_regularity, stride_regularity = np.nan, np.nan  # cases with missing peaks
+                step_regularity, stride_regularity = (
+                    np.nan,
+                    np.nan,
+                )  # cases with missing peaks
 
             # checking if both step and stride regularity are greater than 0.15
             if step_regularity > 0.15 and stride_regularity > 0.15:
@@ -227,7 +252,14 @@ class KerenGSD(BaseGsdDetector):
 
         # 9. Combining all conditions and selecting central second windows which meet all conditions
         # stacking all condition arrays
-        stacked_arrays = np.vstack((binary_peak_presence, binary_std_thresh, binary_psd_thresh, binary_regularity_thresh))
+        stacked_arrays = np.vstack(
+            (
+                binary_peak_presence,
+                binary_std_thresh,
+                binary_psd_thresh,
+                binary_regularity_thresh,
+            )
+        )
         # check if all conditions are met in each window
         result = np.all(stacked_arrays == 1, axis=0).astype(int)
 
@@ -243,20 +275,21 @@ class KerenGSD(BaseGsdDetector):
         filtered_starts = mid_second_start[result == 1]
         filtered_ends = mid_second_end[result == 1]
         # creating the dataframe
-        seconds_walking = pd.DataFrame({
-            'start': filtered_starts,
-            'end': filtered_ends
-        })
+        seconds_walking = pd.DataFrame({"start": filtered_starts, "end": filtered_ends})
 
         # merging consequtive seconds
-        merge_points = seconds_walking['start'] == seconds_walking['end'].shift()
+        merge_points = seconds_walking["start"] == seconds_walking["end"].shift()
         group = (~merge_points).cumsum()
-        gs = seconds_walking.groupby(group).agg({'start': 'first', 'end': 'last'}).reset_index(drop=True)
+        gs = (
+            seconds_walking.groupby(group)
+            .agg({"start": "first", "end": "last"})
+            .reset_index(drop=True)
+        )
 
         # setting the index name
-        gs.index.name = 'gs_id'
+        gs.index.name = "gs_id"
         # Clipping start and end to be within limits of file
-        gs[['start', 'end']] = np.clip(gs[['start', 'end']], 0, len(self.data))
+        gs[["start", "end"]] = np.clip(gs[["start", "end"]], 0, len(self.data))
 
         # Creating Continuous Walking Bouts from micro walking bouts
         if self.cwb:

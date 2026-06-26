@@ -1,4 +1,3 @@
-import warnings
 from types import MappingProxyType
 from typing import Any, Final, Generic, Optional
 import pandas as pd
@@ -50,6 +49,7 @@ VAR_DMO_COLUMNS = [
     "walking_speed_mps_cv",
     "walking_speed_mps_rmssd",
 ]
+
 
 class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     """
@@ -213,7 +213,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 "stride_selection": StrideFiltering(),
                 "wba": WbAssembly(),
                 "dmo_thresholds": get_thresholds(),
-                "dmo_aggregation": GenericAggregator(**GenericAggregator.PredefinedParameters.single_day),
+                "dmo_aggregation": GenericAggregator(
+                    **GenericAggregator.PredefinedParameters.single_day
+                ),
             }
         )
 
@@ -228,7 +230,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 "stride_selection": StrideFiltering(),
                 "wba": WbAssembly(),
                 "dmo_thresholds": get_thresholds(),
-                "dmo_aggregation": GenericAggregator(**GenericAggregator.PredefinedParameters.single_day),
+                "dmo_aggregation": GenericAggregator(
+                    **GenericAggregator.PredefinedParameters.single_day
+                ),
             }
         )
 
@@ -305,7 +309,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         imu_data = rename_axes_to_body(datapoint.data_ss)
         sampling_rate_hz = datapoint.sampling_rate_hz
 
-        self.gait_sequence_detection_ = self.gait_sequence_detection.clone().detect(imu_data)
+        self.gait_sequence_detection_ = self.gait_sequence_detection.clone().detect(
+            imu_data
+        )
         self.gs_list_ = self.gait_sequence_detection_.gs_list_
         self.gs_iterator_ = self._run_per_gs(self.gs_list_, imu_data)
 
@@ -331,9 +337,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 if available
             ]
             index_names = ["gs_id", "sec_center_samples"]
-            self.raw_per_sec_parameters_ = pd.DataFrame(columns=[*expected_results, *index_names]).set_index(
-                index_names
-            )
+            self.raw_per_sec_parameters_ = pd.DataFrame(
+                columns=[*expected_results, *index_names]
+            ).set_index(index_names)
 
         if "r_gs_id" in self.raw_per_sec_parameters_.index.names:
             self.raw_per_sec_parameters_ = self.raw_per_sec_parameters_.reset_index(
@@ -351,11 +357,15 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         )
 
         flat_index = pd.Index(
-            ["_".join(str(e) for e in s_id) for s_id in self.raw_per_stride_parameters_.index], name="s_id"
+            [
+                "_".join(str(e) for e in s_id)
+                for s_id in self.raw_per_stride_parameters_.index
+            ],
+            name="s_id",
         )
-        raw_per_stride_parameters = self.raw_per_stride_parameters_.reset_index("gs_id").rename(
-            columns={"gs_id": "original_gs_id"}
-        )
+        raw_per_stride_parameters = self.raw_per_stride_parameters_.reset_index(
+            "gs_id"
+        ).rename(columns={"gs_id": "original_gs_id"})
         raw_per_stride_parameters.index = flat_index
 
         self.stride_selection_ = self.stride_selection.clone().filter(
@@ -368,7 +378,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         )
 
         self.per_stride_parameters_ = self.wba_.annotated_stride_list_
-        self.per_wb_parameters_ = self._aggregate_per_wb(self.per_stride_parameters_, self.wba_.wb_meta_parameters_)
+        self.per_wb_parameters_ = self._aggregate_per_wb(
+            self.per_stride_parameters_, self.wba_.wb_meta_parameters_
+        )
 
         # Variability DMOs calculation
         self.var_dmos = within_wb_var(self.per_stride_parameters_)
@@ -377,10 +389,14 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         # and aligns with per_wb_parameters_ index so we can safely concat later.
         if self.var_dmos.empty:
             # create an empty dataframe with expected columns and same index as per_wb_parameters_
-            self.var_dmos = pd.DataFrame(index=self.per_wb_parameters_.index, columns=VAR_DMO_COLUMNS)
+            self.var_dmos = pd.DataFrame(
+                index=self.per_wb_parameters_.index, columns=VAR_DMO_COLUMNS
+            )
 
         # Variability DMOs append to per_wb_parameters_
-        self.per_wb_parameters_ = pd.concat([self.per_wb_parameters_, self.var_dmos], axis=1)
+        self.per_wb_parameters_ = pd.concat(
+            [self.per_wb_parameters_, self.var_dmos], axis=1
+        )
 
         # drop temporary or object columns if present
         if "rule_obj" in self.per_wb_parameters_.columns:
@@ -397,7 +413,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             height_m = datapoint.participant_metadata.get("height_m")
             if height_m is None:
                 height_m = 1.65
-                print(f" Warning: height_m not provided for {datapoint.participant_id}, using default value of 1.65m")
+                print(
+                    f" Warning: height_m not provided for {datapoint.participant_id}, using default value of 1.65m"
+                )
 
             self.per_wb_parameter_mask_ = apply_thresholds(
                 self.per_wb_parameters_,
@@ -459,7 +477,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             # Only run a second detection if a separate SL detector was provided,
             # otherwise reuse the result from the primary ICD at no extra cost
             if use_separate_icd_sl:
-                icd_sl_contacts = self.initial_contact_detection_sl.clone().detect(gs_data).ic_list_
+                icd_sl_contacts = (
+                    self.initial_contact_detection_sl.clone().detect(gs_data).ic_list_
+                )
             else:
                 icd_sl_contacts = icd.ic_list_
 
@@ -475,8 +495,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             sl_r = None
             if self.stride_length_calculation:
                 sl = self.stride_length_calculation.clone().calculate(
-                    gs_data, initial_contacts=icd_sl_contacts,
-                    **self._all_action_kwargs
+                    gs_data, initial_contacts=icd_sl_contacts, **self._all_action_kwargs
                 )
                 sl_r = sl.stride_length_per_sec_
                 r.stride_length_per_sec = sl.stride_length_per_sec_
@@ -486,14 +505,17 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                     gs_data,
                     initial_contacts=icd.ic_list_,
                     cadence_per_sec=cad_r,
-                    stride_length_per_sec=sl_r
+                    stride_length_per_sec=sl_r,
                 )
                 r.walking_speed_per_sec = ws.walking_speed_per_sec_
 
         return gs_iterator
 
     def _sec_to_stride(
-            self, sec_level_paras: pd.DataFrame, ic_list: pd.DataFrame, sampling_rate_hz: float
+        self,
+        sec_level_paras: pd.DataFrame,
+        ic_list: pd.DataFrame,
+        sampling_rate_hz: float,
     ) -> pd.DataFrame:
         """
         Convert per-second parameters to per-stride parameter regions.
@@ -523,14 +545,20 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             # We need to do that in a separate step, as the groupby is not working with an empty dataframe
             stride_list = strides_list_from_ic_list_no_lrc(ic_list)
         else:
-            stride_list = ic_list.groupby("gs_id", group_keys=False).apply(strides_list_from_ic_list_no_lrc)
+            stride_list = ic_list.groupby("gs_id", group_keys=False).apply(
+                strides_list_from_ic_list_no_lrc
+            )
 
-        stride_list = stride_list.assign(stride_duration_s=lambda df_: (df_.end - df_.start) / sampling_rate_hz)
+        stride_list = stride_list.assign(
+            stride_duration_s=lambda df_: (df_.end - df_.start) / sampling_rate_hz
+        )
 
         # If there are no strides, return empty dataframe with correct columns
         if stride_list.empty:
             # Ensure the returned empty dataframe contains columns from sec_level_paras as your original except-block did.
-            stride_list = stride_list.reindex(columns=[*stride_list.columns, *sec_level_paras.columns])
+            stride_list = stride_list.reindex(
+                columns=[*stride_list.columns, *sec_level_paras.columns]
+            )
             return stride_list
 
         # If there are strides we join per-second params into stride regions
@@ -543,7 +571,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
 
         return stride_list
 
-    def _aggregate_per_wb(self, per_stride_parameters: pd.DataFrame, wb_meta_parameters: pd.DataFrame) -> pd.DataFrame:
+    def _aggregate_per_wb(
+        self, per_stride_parameters: pd.DataFrame, wb_meta_parameters: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         Aggregate per-stride parameters into per-walking-bout (WB) features.
 
@@ -579,7 +609,9 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         )
 
 
-class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
+class MultiGaitPipelineMultimorbidityImpaired(
+    MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]
+):
     """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in impaired multimorbid cohorts tested in [2].
 
     This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
@@ -593,7 +625,12 @@ class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], G
     .. [2] Under review.
     """
 
-    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.impaired_multimorbid.items()})
+    @set_defaults(
+        **{
+            k: cf(v)
+            for k, v in MultiGaitPipeline.PredefinedParameters.impaired_multimorbid.items()
+        }
+    )
     def __init__(
         self,
         *,
@@ -622,7 +659,9 @@ class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], G
         )
 
 
-class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
+class MultiGaitPipelineHealthyCoMorbidity(
+    MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]
+):
     """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in a healthier comorbid sample tested in [1].
 
     This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
@@ -639,7 +678,12 @@ class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Gener
     Bioengineering (Basel). 2025 Oct 15;12(10):1108. doi: 10.3390/bioengineering12101108. PMID: 41155107; PMCID: PMC12561645.
     """
 
-    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.healthy_comobility.items()})
+    @set_defaults(
+        **{
+            k: cf(v)
+            for k, v in MultiGaitPipeline.PredefinedParameters.healthy_comobility.items()
+        }
+    )
     def __init__(
         self,
         *,

@@ -5,11 +5,7 @@ from typing import Literal
 from multigait.GSD.utils.gravity_remove_butter import gravity_motion_butterworth
 from multigait.GSD.utils.cwb import cwb
 from multigait.GSD.base_gsd import BaseGsdDetector
-from mobgap.data_transform import (
-    Resample,
-    chain_transformers,
-    ButterworthFilter
-)
+from mobgap.data_transform import Resample, chain_transformers, ButterworthFilter
 
 
 class HickeyGSD(BaseGsdDetector):
@@ -58,28 +54,35 @@ class HickeyGSD(BaseGsdDetector):
     - The algorithm operates on resampled data (default 100 Hz), hence it can be considered sample rate agnostic.
     """
 
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist", cwb: bool = True):
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+        cwb: bool = True,
+    ):
         """
-         Initialise the HickeyGSD class.
+        Initialise the HickeyGSD class.
 
-         Parameters
-         ----------
-         version : str
-             Only 'wrist' is supported in this release.
-         cwb : bool
-             If True, merges micro-walking bouts into continuous walking bouts.
-         """
+        Parameters
+        ----------
+        version : str
+            Only 'wrist' is supported in this release.
+        cwb : bool
+            If True, merges micro-walking bouts into continuous walking bouts.
+        """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
         self.cwb = cwb
 
         if self.version == "wrist":
-            thresholdupright = 9.5 # in m/s^2 already
+            thresholdupright = 9.5  # in m/s^2 already
             thresholdstill = 0.1 * 9.81
-        elif self.version  == "improved_lowback":
+        elif self.version == "improved_lowback":
             thresholdupright = -0.8 * 9.81
             thresholdstill = 0.17 * 9.81
         elif self.version == "original_lowback":
@@ -91,8 +94,13 @@ class HickeyGSD(BaseGsdDetector):
         self.ThresholdStill = thresholdstill
         self.ThresholdUpright = thresholdupright
 
-
-    def detect(self, data, *, sampling_rate_hz: float = 100, target_sampling_rate_hz: float = 100) -> Self:
+    def detect(
+        self,
+        data,
+        *,
+        sampling_rate_hz: float = 100,
+        target_sampling_rate_hz: float = 100,
+    ) -> Self:
         """
         Detect walking bouts from accelerometer data (wrist or lower-back).
 
@@ -144,25 +152,27 @@ class HickeyGSD(BaseGsdDetector):
         self.data = data
         self.sampling_rate_hz = sampling_rate_hz
         self.target_sampling_rate_hz = target_sampling_rate_hz
-        cols = ['acc_is', 'acc_ml', 'acc_pa']
+        cols = ["acc_is", "acc_ml", "acc_pa"]
         acc = self.data[cols]
 
         # We start with the preprocessing steps depending on the version
-        if self.version  in ["improved_lowback", "original_lowback"]:
+        if self.version in ["improved_lowback", "original_lowback"]:
             # vertical axis should point downwards
             # mediolateral axis should point to the right when looking at the subject from the front
             # anteroposterior axis should point forward (remain similar)
             acc_turned = pd.DataFrame()
 
-            acc_turned['acc_is'] = -acc['acc_is']
-            acc_turned['acc_ml'] = -acc['acc_ml']
-            acc_turned['acc_pa'] = acc['acc_pa']
+            acc_turned["acc_is"] = -acc["acc_is"]
+            acc_turned["acc_ml"] = -acc["acc_ml"]
+            acc_turned["acc_pa"] = acc["acc_pa"]
 
             # Target sample rate is 100 which is similar to the sensor.
             # Added a check to see if the sensor sample rate is 100 and if it is then we don't resample
             if self.sampling_rate_hz != 100:
                 filter_chain = [("resampling", Resample(self.target_sampling_rate_hz))]
-                acc_turned = chain_transformers(acc_turned, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
+                acc_turned = chain_transformers(
+                    acc_turned, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+                )
 
             self.imu_preprocessed = acc_turned
 
@@ -173,13 +183,15 @@ class HickeyGSD(BaseGsdDetector):
             # calculating norm of the acceleration
             acc_norm = np.linalg.norm(acc_nograv, axis=1)
             # converting to pandas DataFrame
-            acc_norm = pd.DataFrame(acc_norm, columns=['acc_norm'])
+            acc_norm = pd.DataFrame(acc_norm, columns=["acc_norm"])
 
             # Target sample rate is 100 which is similar to the sensor.
             # Added a check to see if the sensor sample rate is 100 and if it is then we don't resample
             if self.sampling_rate_hz != 100:
                 filter_chain = [("resampling", Resample(self.target_sampling_rate_hz))]
-                acc_norm = chain_transformers(acc_norm, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
+                acc_norm = chain_transformers(
+                    acc_norm, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+                )
 
             self.imu_preprocessed = acc_norm
 
@@ -200,10 +212,23 @@ class HickeyGSD(BaseGsdDetector):
             # Performing a low pass butterworth filter on the data
             cutoff = 17
             # class instance
-            filter_chain = [("butter", ButterworthFilter(order=2, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
+            filter_chain = [
+                (
+                    "butter",
+                    ButterworthFilter(
+                        order=2, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                    ),
+                )
+            ]
 
             # application to all corrected axes
-            acc_filt = np.asarray(chain_transformers(acc_norm_centered, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+            acc_filt = np.asarray(
+                chain_transformers(
+                    acc_norm_centered,
+                    filter_chain,
+                    sampling_rate_hz=self.sampling_rate_hz,
+                )
+            )
 
             # SD and mean calculation for all axes every 0.1s
             std_acc = np.zeros(win_num)
@@ -221,24 +246,29 @@ class HickeyGSD(BaseGsdDetector):
 
             # Apply the conditions to each window
             for i in range(win_num):
-                if std_acc[i] >= self.ThresholdStill and mean_acc[i] <= self.ThresholdUpright:
+                if (
+                    std_acc[i] >= self.ThresholdStill
+                    and mean_acc[i] <= self.ThresholdUpright
+                ):
                     i_array_move_st_si[i] = 1
 
             # if i_array_move_st_si is all ones then the function should return a dataframe with the start and end of the signal!
             if i_array_move_st_si.sum() == win_num:
-                self.gs_list_ = pd.DataFrame([[0, len(acc_norm_centered)]], columns=["start", "end"])
+                self.gs_list_ = pd.DataFrame(
+                    [[0, len(acc_norm_centered)]], columns=["start", "end"]
+                )
                 # Add an index "gs_id" that starts from 0
-                self.gs_list_.index.name = 'gs_id'
+                self.gs_list_.index.name = "gs_id"
                 return self
 
             # if i_array_move_st_si is all zeros then there is no walking and the function should return an empty dataframe
             if i_array_move_st_si.sum() == 0:
                 self.gs_list_ = pd.DataFrame(columns=["start", "end"])
                 # Add an index "gs_id" that starts from 0
-                self.gs_list_.index.name = 'gs_id'
+                self.gs_list_.index.name = "gs_id"
                 return self
 
-            #Calculating starts and ends of walking
+            # Calculating starts and ends of walking
             # first and last elements should be 0 to identify transitions
             i_array_move_st_si[0] = 0
             i_array_move_st_si[-1] = 0
@@ -249,29 +279,37 @@ class HickeyGSD(BaseGsdDetector):
             bout_stop_move_st_si = np.where(diffs == -1)[0] + 1
 
             # Combine start and stop bouts into one array
-            bout_array_move_st_si = np.column_stack((bout_start_move_st_si, bout_stop_move_st_si))
+            bout_array_move_st_si = np.column_stack(
+                (bout_start_move_st_si, bout_stop_move_st_si)
+            )
 
             # Initialize Difference Arrays
-            betweenbbout_array_move_st_si = np.zeros(len(bout_array_move_st_si), dtype=int)
+            betweenbbout_array_move_st_si = np.zeros(
+                len(bout_array_move_st_si), dtype=int
+            )
 
             # Set the first value of DifferenceArrayAMoveStSi to be similar to the first value of BoutArrayMoveStSi
             # the reason is that this represents the difference from the beginning of the signal to the first bout
-            betweenbbout_array_move_st_si[0] = bout_array_move_st_si[0,0]
+            betweenbbout_array_move_st_si[0] = bout_array_move_st_si[0, 0]
 
             # Calculate the bout lengths
             boutlength_array_move_st_si = bout_stop_move_st_si - bout_start_move_st_si
 
             # Working out the differences between consecutive bouts
             for i in range(1, len(bout_array_move_st_si)):
-                betweenbbout_array_move_st_si[i] = abs(bout_stop_move_st_si[i-1] - bout_start_move_st_si[i])
+                betweenbbout_array_move_st_si[i] = abs(
+                    bout_stop_move_st_si[i - 1] - bout_start_move_st_si[i]
+                )
 
             # Combine all the variables into one array, including start, stop, difference between bouts and bout length
-            difference_array_move_st_si = np.column_stack((
-                bout_start_move_st_si,
-                bout_stop_move_st_si,
-                betweenbbout_array_move_st_si,
-                boutlength_array_move_st_si
-            ))
+            difference_array_move_st_si = np.column_stack(
+                (
+                    bout_start_move_st_si,
+                    bout_stop_move_st_si,
+                    betweenbbout_array_move_st_si,
+                    boutlength_array_move_st_si,
+                )
+            )
 
             # Here we merge bouts which are 2.25s or less apart. Rationale is that two consequtive ICs
             # are expected to be from 0.25 to 2.25s appart so if two bouts have a smaller break than 2.25s then the break is walking
@@ -281,36 +319,53 @@ class HickeyGSD(BaseGsdDetector):
                 if difference_array_move_st_si[i, 2] <= 22.5:
                     # Merge current bout with the last one (index i-1)
                     difference_array_move_st_si[i - 1, 1] = difference_array_move_st_si[
-                        i, 1]  # Update the stop time of the last bout
-                    difference_array_move_st_si[i - 1, 3] += difference_array_move_st_si[i, 3]  # Combine bout lengths
+                        i, 1
+                    ]  # Update the stop time of the last bout
+                    difference_array_move_st_si[i - 1, 3] += (
+                        difference_array_move_st_si[i, 3]
+                    )  # Combine bout lengths
 
                     # Remove the current row after merging
-                    difference_array_move_st_si = np.delete(difference_array_move_st_si, i, axis=0)
+                    difference_array_move_st_si = np.delete(
+                        difference_array_move_st_si, i, axis=0
+                    )
                 else:
                     i += 1  # Move to the next row if no merge is needed
 
             # According to consensus (Mob-D) a stride cannot be lower than 0.2s and if we need at least 2 strides to form a bout
             # we need to remove bouts that are shorter than 0.5s. This is in accordance with the original publication as well
             # Using 5 due to scaling of windows to 0.1s so half a second is 5 values
-            difference_array_move_st_si = difference_array_move_st_si[difference_array_move_st_si[:, 3] > 5]
+            difference_array_move_st_si = difference_array_move_st_si[
+                difference_array_move_st_si[:, 3] > 5
+            ]
 
             # Removing the 3rd column indicating the "pause" between bouts
-            difference_array_move_st_si = np.delete(difference_array_move_st_si, 2, axis=1)
+            difference_array_move_st_si = np.delete(
+                difference_array_move_st_si, 2, axis=1
+            )
 
             # Converting back to samples
             difference_array_move_st_si = (difference_array_move_st_si * n).astype(int)
 
             # Create a pandas dataframe with the start and end of the gait sequences
-            gs_list_ = pd.DataFrame(difference_array_move_st_si[:, [0, 1]], columns=["start", "end"])
+            gs_list_ = pd.DataFrame(
+                difference_array_move_st_si[:, [0, 1]], columns=["start", "end"]
+            )
 
             # Add an index "gs_id" that starts from 0
-            gs_list_.index.name = 'gs_id'
+            gs_list_.index.name = "gs_id"
             # Clipping start and end to be within limits of file
-            gs_list_[['start', 'end']] = np.clip(gs_list_[['start', 'end']], 0, len(self.data))
+            gs_list_[["start", "end"]] = np.clip(
+                gs_list_[["start", "end"]], 0, len(self.data)
+            )
 
             # Creating Continuous Walking Bouts from micro walking bouts
             if self.cwb:
-                gs_list_ = cwb(gs_list_, max_break_seconds=3, sampling_rate=self.target_sampling_rate_hz)
+                gs_list_ = cwb(
+                    gs_list_,
+                    max_break_seconds=3,
+                    sampling_rate=self.target_sampling_rate_hz,
+                )
 
             self.gs_list_ = gs_list_
 
@@ -319,9 +374,9 @@ class HickeyGSD(BaseGsdDetector):
         elif self.version in ["improved_lowback", "original_lowback"]:
             data = self.imu_preprocessed
 
-            acc_is = data['acc_is']
-            acc_ml = data['acc_ml']
-            acc_pa = data['acc_pa']
+            acc_is = data["acc_is"]
+            acc_ml = data["acc_ml"]
+            acc_pa = data["acc_pa"]
 
             # Center the vertical (is) axis by subtracting its mean
             acc_is_mean = acc_is.mean()
@@ -345,15 +400,37 @@ class HickeyGSD(BaseGsdDetector):
             # The wintfilt function does not need to be in a different script as I will use the mogbap butter.
             cutoff = 17
             # class instance
-            filter_chain = [("butter", ButterworthFilter(order=2, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
+            filter_chain = [
+                (
+                    "butter",
+                    ButterworthFilter(
+                        order=2, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                    ),
+                )
+            ]
 
             # application to all corrected axes
             acc_is_filt = np.asarray(
-                chain_transformers(acc_is_centered, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+                chain_transformers(
+                    acc_is_centered,
+                    filter_chain,
+                    sampling_rate_hz=self.sampling_rate_hz,
+                )
+            )
             acc_ml_filt = np.asarray(
-                chain_transformers(acc_ml_centered, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+                chain_transformers(
+                    acc_ml_centered,
+                    filter_chain,
+                    sampling_rate_hz=self.sampling_rate_hz,
+                )
+            )
             acc_pa_filt = np.asarray(
-                chain_transformers(acc_pa_centered, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+                chain_transformers(
+                    acc_pa_centered,
+                    filter_chain,
+                    sampling_rate_hz=self.sampling_rate_hz,
+                )
+            )
 
             # SD and mean calculation for all axes every 0.1s (window)
             std_acc_is = np.zeros(win_num)
@@ -381,21 +458,26 @@ class HickeyGSD(BaseGsdDetector):
             # Apply the conditions to each window. For the SD calculation, the centered and filter signal is used
             # For the standing threshold I use the raw signal
             for i in range(win_num):
-                if std_acc[i] >= self.ThresholdStill and mean_acc_is[i] <= self.ThresholdUpright:
+                if (
+                    std_acc[i] >= self.ThresholdStill
+                    and mean_acc_is[i] <= self.ThresholdUpright
+                ):
                     i_array_move_st_si[i] = 1
 
             # if i_array_move_st_si is all ones then the function should return a dataframe with the start and end of the signal!
             if i_array_move_st_si.sum() == win_num:
-                self.gs_list_ = pd.DataFrame([[0, len(acc_is_centered)]], columns=["start", "end"])
+                self.gs_list_ = pd.DataFrame(
+                    [[0, len(acc_is_centered)]], columns=["start", "end"]
+                )
                 # Add an index "gs_id" that starts from 0
-                self.gs_list_.index.name = 'gs_id'
+                self.gs_list_.index.name = "gs_id"
                 return self
 
             # if i_array_move_st_si is all zeros then there is no walking and the function should return an empty dataframe
             if i_array_move_st_si.sum() == 0:
                 self.gs_list_ = pd.DataFrame(columns=["start", "end"])
                 # Add an index "gs_id" that starts from 0
-                self.gs_list_.index.name = 'gs_id'
+                self.gs_list_.index.name = "gs_id"
                 return self
 
             # Calculating starts and ends of walking
@@ -409,10 +491,14 @@ class HickeyGSD(BaseGsdDetector):
             bout_stop_move_st_si = np.where(diffs == -1)[0] + 1
 
             # Combine start and stop bouts into one array
-            bout_array_move_st_si = np.column_stack((bout_start_move_st_si, bout_stop_move_st_si))
+            bout_array_move_st_si = np.column_stack(
+                (bout_start_move_st_si, bout_stop_move_st_si)
+            )
 
             # Initialize Difference Arrays
-            betweenbbout_array_move_st_si = np.zeros(len(bout_array_move_st_si), dtype=int)
+            betweenbbout_array_move_st_si = np.zeros(
+                len(bout_array_move_st_si), dtype=int
+            )
 
             # Set the first value of DifferenceArrayAMoveStSi to be similar to the first value of BoutArrayMoveStSi
             # the reason is that this represents the difference from the beginning of the signal to the first bout
@@ -423,15 +509,19 @@ class HickeyGSD(BaseGsdDetector):
 
             # Working out the differences between consecutive bouts
             for i in range(1, len(bout_array_move_st_si)):
-                betweenbbout_array_move_st_si[i] = abs(bout_stop_move_st_si[i - 1] - bout_start_move_st_si[i])
+                betweenbbout_array_move_st_si[i] = abs(
+                    bout_stop_move_st_si[i - 1] - bout_start_move_st_si[i]
+                )
 
             # Combine all the variables into one array, including start, stop, difference between bouts and bout length
-            difference_array_move_st_si = np.column_stack((
-                bout_start_move_st_si,
-                bout_stop_move_st_si,
-                betweenbbout_array_move_st_si,
-                boutlength_array_move_st_si
-            ))
+            difference_array_move_st_si = np.column_stack(
+                (
+                    bout_start_move_st_si,
+                    bout_stop_move_st_si,
+                    betweenbbout_array_move_st_si,
+                    boutlength_array_move_st_si,
+                )
+            )
 
             # Here we merge bouts which are 2.25s or less apart. Rationale is that two consequtive ICs
             # are expected to be from 0.25 to 2.25s appart so if two bouts have a smaller break than 2.25s then the break is walking
@@ -441,36 +531,53 @@ class HickeyGSD(BaseGsdDetector):
                 if difference_array_move_st_si[i, 2] <= 22.5:
                     # Merge current bout with the last one (index i-1)
                     difference_array_move_st_si[i - 1, 1] = difference_array_move_st_si[
-                        i, 1]  # Update the stop time of the last bout
-                    difference_array_move_st_si[i - 1, 3] += difference_array_move_st_si[i, 3]  # Combine bout lengths
+                        i, 1
+                    ]  # Update the stop time of the last bout
+                    difference_array_move_st_si[i - 1, 3] += (
+                        difference_array_move_st_si[i, 3]
+                    )  # Combine bout lengths
 
                     # Remove the current row after merging
-                    difference_array_move_st_si = np.delete(difference_array_move_st_si, i, axis=0)
+                    difference_array_move_st_si = np.delete(
+                        difference_array_move_st_si, i, axis=0
+                    )
                 else:
                     i += 1  # Move to the next row if no merge is needed
 
             # According to consensus (Mob-D) a stride cannot be lower than 0.2s and if we need at least 2 strides to form a bout
             # we need to remove bouts that are shorter than 0.5s. This is in accordance with the original publication as well
             # Using 5 due to scaling of windows to 0.1s so half a second is 5 values
-            difference_array_move_st_si = difference_array_move_st_si[difference_array_move_st_si[:, 3] > 5]
+            difference_array_move_st_si = difference_array_move_st_si[
+                difference_array_move_st_si[:, 3] > 5
+            ]
 
             # Removing the 3rd column indicating the "pause" between bouts
-            difference_array_move_st_si = np.delete(difference_array_move_st_si, 2, axis=1)
+            difference_array_move_st_si = np.delete(
+                difference_array_move_st_si, 2, axis=1
+            )
 
             # Converting back to samples
             difference_array_move_st_si = (difference_array_move_st_si * n).astype(int)
 
             # Create a pandas dataframe with the start and end of the gait sequences
-            gs_list_ = pd.DataFrame(difference_array_move_st_si[:, [0, 1]], columns=["start", "end"])
+            gs_list_ = pd.DataFrame(
+                difference_array_move_st_si[:, [0, 1]], columns=["start", "end"]
+            )
 
             # Add an index "gs_id" that starts from 0
-            gs_list_.index.name = 'gs_id'
+            gs_list_.index.name = "gs_id"
             # Clipping start and end to be within limits of file
-            gs_list_[['start', 'end']] = np.clip(gs_list_[['start', 'end']], 0, len(self.data))
+            gs_list_[["start", "end"]] = np.clip(
+                gs_list_[["start", "end"]], 0, len(self.data)
+            )
 
             # Creating Continuous Walking Bouts from micro walking bouts
             if self.cwb:
-                gs_list_ = cwb(gs_list_, max_break_seconds=3, sampling_rate=self.target_sampling_rate_hz)
+                gs_list_ = cwb(
+                    gs_list_,
+                    max_break_seconds=3,
+                    sampling_rate=self.target_sampling_rate_hz,
+                )
 
             self.gs_list_ = gs_list_
 

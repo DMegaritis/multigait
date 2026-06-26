@@ -3,11 +3,8 @@ import numpy as np
 import pandas as pd
 from typing_extensions import Self, Unpack
 from typing import Literal, Any
-from mobgap.data_transform import (
-    chain_transformers,
-    ButterworthFilter
-)
-from multigait.SL.utils.SL_utils import (moving_average_filter_bylemans)
+from mobgap.data_transform import chain_transformers, ButterworthFilter
+from multigait.SL.utils.SL_utils import moving_average_filter_bylemans
 from multigait.SL.base_sl import BaseSlDetector
 from multigait.utils.data_conversions import seconds_to_samples
 from multigait.utils.interp import interpolate_step_metric
@@ -79,6 +76,7 @@ class BylemansSL(BaseSlDetector):
     max_interpolation_gap_s: float
     raw_step_length_per_step_: pd.DataFrame
     step_length_per_sec_: pd.DataFrame
+
     def __init__(
         self,
         *,
@@ -203,12 +201,19 @@ class BylemansSL(BaseSlDetector):
 
         # Check if ICs are not sorted and sort if necessary
         if not self.initial_contacts["ic"].is_monotonic_increasing:
-            warnings.warn("Initial contacts were not in ascending order. Rearranging them.", stacklevel=2)
-            self.initial_contacts = self.initial_contacts.sort_values("ic").reset_index(drop=True)
+            warnings.warn(
+                "Initial contacts were not in ascending order. Rearranging them.",
+                stacklevel=2,
+            )
+            self.initial_contacts = self.initial_contacts.sort_values("ic").reset_index(
+                drop=True
+            )
 
         self.ic_list = self.initial_contacts["ic"].to_numpy()
 
-        if len(self.ic_list) > 0 and (self.ic_list[0] != 0 or self.ic_list[-1] != len(self.data) - 1):
+        if len(self.ic_list) > 0 and (
+            self.ic_list[0] != 0 or self.ic_list[-1] != len(self.data) - 1
+        ):
             warnings.warn(
                 "Usually we assume that gait sequences are cut to the first and last detected initial "
                 "contact. "
@@ -228,16 +233,29 @@ class BylemansSL(BaseSlDetector):
         # Checking if ic_list is empty or includes only 1 IC
         if len(self.ic_list) <= 1:
             # We can not calculate step length with only one or zero initial contact
-            warnings.warn("Can not calculate step length with only one or zero initial contacts.", stacklevel=1)
+            warnings.warn(
+                "Can not calculate step length with only one or zero initial contacts.",
+                stacklevel=1,
+            )
             self._set_all_nan(sec_centers, self.ic_list)
             return self
 
-        if self.version in ["lowback", "lowback_adaptive", "lowback_foot", "lowback_adaptive_foot"]:
+        if self.version in [
+            "lowback",
+            "lowback_adaptive",
+            "lowback_foot",
+            "lowback_adaptive_foot",
+        ]:
             # Keeping the vertical acceleration for the lowback version
             vacc = self.data["acc_is"].to_numpy()
-        elif self.version in ["wrist", "wrist_adaptive", "wrist_foot", "wrist_adaptive_foot"]:
+        elif self.version in [
+            "wrist",
+            "wrist_adaptive",
+            "wrist_foot",
+            "wrist_adaptive_foot",
+        ]:
             # Using the acceleration norm for the wrist version
-            cols = ['acc_is', 'acc_ml', 'acc_pa']
+            cols = ["acc_is", "acc_ml", "acc_pa"]
             vacc = np.linalg.norm(self.data[cols].values, axis=1)
 
         # Calling the function to calculate step length
@@ -254,14 +272,15 @@ class BylemansSL(BaseSlDetector):
             initial_contacts_per_sec,
             raw_step_length_padded,
             sec_centers,
-            self.max_interpolation_gap_s
+            self.max_interpolation_gap_s,
         )
         # Stride length is derived by multiplying the step length by 2
         stride_length_per_sec = step_length_per_sec * 2
 
-        self._unify_and_set_outputs(raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers)
+        self._unify_and_set_outputs(
+            raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers
+        )
         return self
-
 
     def _calc_step_length_bylemans(
         self,
@@ -286,34 +305,75 @@ class BylemansSL(BaseSlDetector):
 
         # 1. Preprocessing with Butterworth highpass filt
         cutoff = 4
-        filter_chain = [("butter", ButterworthFilter(order=4, cutoff_freq_hz=cutoff, filter_type='highpass'))]
+        filter_chain = [
+            (
+                "butter",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=cutoff, filter_type="highpass"
+                ),
+            )
+        ]
         vacc_butter = np.asarray(
-            chain_transformers(vacc, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+            chain_transformers(
+                vacc, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # 2. Preprocessing with moving average
-        vacc_butter_mav = moving_average_filter_bylemans(vacc_butter, self.sampling_rate_hz)
+        vacc_butter_mav = moving_average_filter_bylemans(
+            vacc_butter, self.sampling_rate_hz
+        )
 
         # 3. Calculating maxmin of acceleration between each initial contact
-        maxmin = np.array([np.max(vacc_butter_mav[ic:ic_next]) - np.min(vacc_butter_mav[ic:ic_next]) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        maxmin = np.array(
+            [
+                np.max(vacc_butter_mav[ic:ic_next])
+                - np.min(vacc_butter_mav[ic:ic_next])
+                for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+            ]
+        )
 
         # 4. Calculating mean of acceleration between each initial contact
-        mean = np.array([np.mean(vacc_butter_mav[ic:ic_next]) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        mean = np.array(
+            [
+                np.mean(vacc_butter_mav[ic:ic_next])
+                for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+            ]
+        )
 
         # 5. Calculating time in ms between steps
-        dtime = np.array([np.abs(ic - ic_next) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        dtime = np.array(
+            [
+                np.abs(ic - ic_next)
+                for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+            ]
+        )
         # time to seconds
         dtime = dtime / self.sampling_rate_hz
 
         # 6. If version is adaptive calculate RMS between each initial contact
-        if self.version in ["wrist_adaptive", "wrist_adaptive_foot", "lowback_adaptive", "lowback_adaptive_foot"]:
-            rms_values = np.array([np.sqrt(np.mean(np.square(vacc_butter_mav[ic:ic_next]))) for ic, ic_next in zip(initial_contacts, initial_contacts[1:])])
+        if self.version in [
+            "wrist_adaptive",
+            "wrist_adaptive_foot",
+            "lowback_adaptive",
+            "lowback_adaptive_foot",
+        ]:
+            rms_values = np.array(
+                [
+                    np.sqrt(np.mean(np.square(vacc_butter_mav[ic:ic_next])))
+                    for ic, ic_next in zip(initial_contacts, initial_contacts[1:])
+                ]
+            )
 
             # calculating the mean rms
             mean_rms = np.mean(rms_values)
 
             # Amending BylemansA if mean_rms is not 0
             if mean_rms == 0:
-                warnings.warn("The calculated RMS is 0. Step length calculation will proceed without scaling BylemansA.", stacklevel=2)
+                warnings.warn(
+                    "The calculated RMS is 0. Step length calculation will proceed without scaling BylemansA.",
+                    stacklevel=2,
+                )
             else:
                 self.BylemansA = self.BylemansA * mean_rms
 
@@ -325,14 +385,19 @@ class BylemansSL(BaseSlDetector):
         # Identify valid indices where denominator != 0
         valid_idx = denominator != 0
         # Compute step length only for valid indices
-        step_length[valid_idx] = self.BylemansA * (np.abs(mean[valid_idx]) * (1 / denominator[valid_idx]) ** 0.5) ** (
-                    1 / 2.7) + self.BylemansB
+        step_length[valid_idx] = (
+            self.BylemansA
+            * (np.abs(mean[valid_idx]) * (1 / denominator[valid_idx]) ** 0.5)
+            ** (1 / 2.7)
+            + self.BylemansB
+        )
 
         # Warn if zero denominators detected
         if not np.all(valid_idx):
             warnings.warn(
                 f"Zero denominator detected in step length calculation at indices {np.where(~valid_idx)[0]}. Setting step length to NaN for these steps.",
-                stacklevel=2)
+                stacklevel=2,
+            )
 
         return step_length
 
@@ -355,14 +420,16 @@ class BylemansSL(BaseSlDetector):
         stride_length_per_sec = np.full(len(sec_centers), np.nan)
         raw_step_length = np.full(np.clip(len(ic_list) - 1, 0, None), np.nan)
         step_length_per_sec = np.full(len(sec_centers), np.nan)
-        self._unify_and_set_outputs(raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers)
+        self._unify_and_set_outputs(
+            raw_step_length, step_length_per_sec, stride_length_per_sec, sec_centers
+        )
 
     def _unify_and_set_outputs(
-            self,
-            raw_step_length: np.ndarray,
-            step_length_per_sec: np.ndarray,
-            stride_length_per_sec: np.ndarray,
-            sec_centers: np.ndarray,
+        self,
+        raw_step_length: np.ndarray,
+        step_length_per_sec: np.ndarray,
+        stride_length_per_sec: np.ndarray,
+        sec_centers: np.ndarray,
     ) -> None:
         """
         Store step and stride length outputs in class attributes.
@@ -384,13 +451,24 @@ class BylemansSL(BaseSlDetector):
         """
 
         # Convert ic_list to a pandas DataFrame temporarily for assignment
-        self.raw_step_length_per_step_ = pd.DataFrame({
-            "ic": self.ic_list[:-1],  # Excluding the last element
-            "step_length_m": raw_step_length
-        })
-        index = pd.Index(seconds_to_samples(sec_centers, self.sampling_rate_hz), name="sec_center_samples")
-        self.step_length_per_sec_ = pd.DataFrame({"step_length_m": step_length_per_sec}, index=index)
-        self.stride_length_per_sec_ = pd.DataFrame({"stride_length_m": stride_length_per_sec}, index=index)
+        self.raw_step_length_per_step_ = pd.DataFrame(
+            {
+                "ic": self.ic_list[:-1],  # Excluding the last element
+                "step_length_m": raw_step_length,
+            }
+        )
+        index = pd.Index(
+            seconds_to_samples(sec_centers, self.sampling_rate_hz),
+            name="sec_center_samples",
+        )
+        self.step_length_per_sec_ = pd.DataFrame(
+            {"step_length_m": step_length_per_sec}, index=index
+        )
+        self.stride_length_per_sec_ = pd.DataFrame(
+            {"stride_length_m": stride_length_per_sec}, index=index
+        )
 
         # Calculate the average stride length
-        self.average_stride_length_ = self.stride_length_per_sec_["stride_length_m"].mean()
+        self.average_stride_length_ = self.stride_length_per_sec_[
+            "stride_length_m"
+        ].mean()

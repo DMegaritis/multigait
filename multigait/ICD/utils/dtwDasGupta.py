@@ -1,34 +1,35 @@
 import numpy as np
 from numba import njit
 
+
 @njit
 def dtwdasgupta(r, t):
     """
-      Fast DTW-based warping function.
+    Fast DTW-based warping function.
 
-      This function aligns the second time series `t` to the first time series `r`
-      using Dynamic Time Warping (DTW), and returns a warped version of `t` that
-      follows the temporal structure of `r`. The warping path is averaged when
-      multiple values from `t` map to the same index in `r`.
+    This function aligns the second time series `t` to the first time series `r`
+    using Dynamic Time Warping (DTW), and returns a warped version of `t` that
+    follows the temporal structure of `r`. The warping path is averaged when
+    multiple values from `t` map to the same index in `r`.
 
-      Parameters
-      ----------
-      r : np.ndarray
-          Reference time series (e.g., yaw1).
-      t : np.ndarray
-          Target time series to be warped (e.g., yaw2).
+    Parameters
+    ----------
+    r : np.ndarray
+        Reference time series (e.g., yaw1).
+    t : np.ndarray
+        Target time series to be warped (e.g., yaw2).
 
-      Returns
-      -------
-      np.ndarray
-          Warped version of `t`, aligned to `r` in time.
+    Returns
+    -------
+    np.ndarray
+        Warped version of `t`, aligned to `r` in time.
 
-      Notes
-      -----
-      - This version is ~300× faster than a naïve Python implementation.
-      - It uses Numba's `@njit` for just-in-time compilation.
-      - Multiple mappings to the same index are averaged to preserve signal energy.
-      """
+    Notes
+    -----
+    - This version is ~300× faster than a naïve Python implementation.
+    - It uses Numba's `@njit` for just-in-time compilation.
+    - Multiple mappings to the same index are averaged to preserve signal energy.
+    """
 
     M = len(r)
     N = len(t)

@@ -1,5 +1,5 @@
 from multigait.SL.SL2 import KimSL
-from multigait.utils.data_loader import load_imu_data_lowback, load_ICs_lowback, load_imu_data_wrist, load_ICs_wrist
+from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
 
 """
 This is an example on how to use the intensity based Kim stride length algorithm.
@@ -13,9 +13,7 @@ reference_ic = load_ICs_wrist()
 
 # calling the stride length algorithm
 sl = KimSL(version="wrist").calculate(
-    data=imu_data,
-    initial_contacts=reference_ic,
-    sampling_rate_hz=100
+    data=imu_data, initial_contacts=reference_ic, sampling_rate_hz=100
 )
 
 print(sl.stride_length_per_sec_)

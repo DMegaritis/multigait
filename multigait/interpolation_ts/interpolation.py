@@ -7,40 +7,40 @@ from typing import Iterable
 
 class Interpolation:
     """
-     Align multiple time-series datasets to a uniform time grid using PCHIP interpolation.
+    Align multiple time-series datasets to a uniform time grid using PCHIP interpolation.
 
-     This class allows for multiple input DataFrames, each of which must have a 'time' column.
-     The 'time' column should ideally have nanosecond precision (up to 9 fractional digits).
-     Timestamps with fewer than 9 digits will be padded with zeros, and extra digits beyond 9
-     will be truncated automatically.
+    This class allows for multiple input DataFrames, each of which must have a 'time' column.
+    The 'time' column should ideally have nanosecond precision (up to 9 fractional digits).
+    Timestamps with fewer than 9 digits will be padded with zeros, and extra digits beyond 9
+    will be truncated automatically.
 
-     The interpolation process uses a Piecewise Cubic Hermite Interpolating Polynomial (PCHIP)
-     for each column (excluding 'time'). After computing the PCHIP interpolation, the original
-     data values are injected at the nearest grid points where timestamps match, preserving
-     the original samples as much as possible.
+    The interpolation process uses a Piecewise Cubic Hermite Interpolating Polynomial (PCHIP)
+    for each column (excluding 'time'). After computing the PCHIP interpolation, the original
+    data values are injected at the nearest grid points where timestamps match, preserving
+    the original samples as much as possible.
 
-     Features:
-     - Any number or name of data columns is allowed; only the 'time' column is used for interpolation.
-     - Two modes of handling alignment:
-         1. `overlap_windows=True`: Crops all DataFrames to the overlapping time window across datasets.
-         2. Default (`overlap_windows=False`): Fills zeros outside the range of each original dataset to
-            produce DataFrames of equal length.
-     - Automatically removes non-increasing timestamps within each DataFrame.
-     - Returns interpolated DataFrames with the same column order across all inputs.
-     - As a result, the output DataFrames have the same shape and can be concatenated/compared easily.
+    Features:
+    - Any number or name of data columns is allowed; only the 'time' column is used for interpolation.
+    - Two modes of handling alignment:
+        1. `overlap_windows=True`: Crops all DataFrames to the overlapping time window across datasets.
+        2. Default (`overlap_windows=False`): Fills zeros outside the range of each original dataset to
+           produce DataFrames of equal length.
+    - Automatically removes non-increasing timestamps within each DataFrame.
+    - Returns interpolated DataFrames with the same column order across all inputs.
+    - As a result, the output DataFrames have the same shape and can be concatenated/compared easily.
 
-     Attributes:
-         None (class is stateless; all operations are performed in the `interpolate` method)
+    Attributes:
+        None (class is stateless; all operations are performed in the `interpolate` method)
 
-     Usage:
-         interp = Interpolation()
-         aligned_dfs = interp.interpolate([df1, df2, df3], sampling_rate_hz=100, overlap_windows=True)
-         # Returns a tuple of interpolated DataFrames: (df1_aligned, df2_aligned, df3_aligned)
+    Usage:
+        interp = Interpolation()
+        aligned_dfs = interp.interpolate([df1, df2, df3], sampling_rate_hz=100, overlap_windows=True)
+        # Returns a tuple of interpolated DataFrames: (df1_aligned, df2_aligned, df3_aligned)
 
-     Notes:
-     - Despite injecting the original values at the nearest grid point, the PCHIP interpolation might introduce interpolated values outside the original range,
-      effectively smothing some peaks but signal morphology is not affected. This is mitigated by injecting original values at the nearest grid point but there might still be some distortion.
-     """
+    Notes:
+    - Despite injecting the original values at the nearest grid point, the PCHIP interpolation might introduce interpolated values outside the original range,
+     effectively smothing some peaks but signal morphology is not affected. This is mitigated by injecting original values at the nearest grid point but there might still be some distortion.
+    """
 
     def __init__(self):
         pass
@@ -50,7 +50,7 @@ class Interpolation:
         dfs: Iterable[pd.DataFrame] | tuple[pd.DataFrame, pd.DataFrame],
         *,
         sampling_rate_hz: float = 100,
-        overlap_windows: bool = False
+        overlap_windows: bool = False,
     ) -> tuple[pd.DataFrame, ...]:
         # Backwards-compatible: accept (df1, df2) as two positional args too
         if not isinstance(dfs, (list, tuple)):
@@ -64,19 +64,22 @@ class Interpolation:
         ends = []
         for df in dfs:
             df = df.copy()
-            if 'time' not in df.columns:
+            if "time" not in df.columns:
                 raise ValueError("Each DataFrame must have a 'time' column")
-            if not np.issubdtype(df['time'].dtype, np.datetime64):
-                df['time'] = pd.to_datetime(df['time'])
+            if not np.issubdtype(df["time"].dtype, np.datetime64):
+                df["time"] = pd.to_datetime(df["time"])
             # remove non-increasing timestamps (keep strictly increasing)
-            df = df[df['time'].diff().fillna(pd.Timedelta(seconds=1)) > pd.Timedelta(0)]
+            df = df[df["time"].diff().fillna(pd.Timedelta(seconds=1)) > pd.Timedelta(0)]
             df = df.reset_index(drop=True)
             if df.shape[0] == 0:
-                warnings.warn("One of the input DataFrames became empty after removing non-increasing timestamps.", UserWarning)
+                warnings.warn(
+                    "One of the input DataFrames became empty after removing non-increasing timestamps.",
+                    UserWarning,
+                )
             clean_dfs.append(df)
             if df.shape[0] > 0:
-                starts.append(df['time'].iloc[0])
-                ends.append(df['time'].iloc[-1])
+                starts.append(df["time"].iloc[0])
+                ends.append(df["time"].iloc[-1])
             else:
                 # placeholder times so global bounds ignore empty dfs
                 starts.append(pd.Timestamp.max)
@@ -98,19 +101,19 @@ class Interpolation:
         if latest_start > earliest_end:
             overlap = False
             warnings.warn(
-                f"No temporal overlap between datasets:\n"
+                "No temporal overlap between datasets:\n"
                 + "\n".join(
-                    f"  df{i} range = [{(dfs[i]['time'].iloc[0] if dfs[i].shape[0]>0 else 'empty')}, "
-                    f"{(dfs[i]['time'].iloc[-1] if dfs[i].shape[0]>0 else 'empty')}]"
+                    f"  df{i} range = [{(dfs[i]['time'].iloc[0] if dfs[i].shape[0] > 0 else 'empty')}, "
+                    f"{(dfs[i]['time'].iloc[-1] if dfs[i].shape[0] > 0 else 'empty')}]"
                     for i in range(len(dfs))
                 ),
-                UserWarning
+                UserWarning,
             )
 
         # ** Build union of columns (excluding 'time') so outputs share same columns
         all_cols = []
         for df in dfs:
-            cols = [c for c in df.columns if c != 'time']
+            cols = [c for c in df.columns if c != "time"]
             for c in cols:
                 if c not in all_cols:
                     all_cols.append(c)
@@ -126,12 +129,16 @@ class Interpolation:
         if n_samples == 1:
             t_target_ns = np.array([t_start.value], dtype=np.int64)
         else:
-            t_target_float = np.linspace(float(t_start.value), float(t_end.value), n_samples)
+            t_target_float = np.linspace(
+                float(t_start.value), float(t_end.value), n_samples
+            )
             t_target_ns = np.rint(t_target_float).astype(np.int64)
         t_target = pd.to_datetime(t_target_ns)
 
         # ** Preallocate arrays for interpolated values and masks (one per input df)
-        arrays_interp = [np.zeros((n_samples, n_cols), dtype=float) for _ in range(len(dfs))]
+        arrays_interp = [
+            np.zeros((n_samples, n_cols), dtype=float) for _ in range(len(dfs))
+        ]
         masks = [np.zeros(n_samples, dtype=bool) for _ in range(len(dfs))]
 
         # ** For each df, do PCHIP interpolation for the columns that exist in that df.
@@ -140,7 +147,7 @@ class Interpolation:
                 # leave as zeros and mask stays False
                 continue
 
-            x_ns = df['time'].values.astype('int64')
+            x_ns = df["time"].values.astype("int64")
 
             # mask True for points inside original data range
             masks[i] = (t_target_ns >= x_ns.min()) & (t_target_ns <= x_ns.max())
@@ -154,9 +161,11 @@ class Interpolation:
                 # only interpolate if we have >=2 points; else rely on injection of originals
                 if df.shape[0] >= 2:
                     try:
-                        interp_fn = PchipInterpolator(x_ns.astype(float), y, extrapolate=False)
+                        interp_fn = PchipInterpolator(
+                            x_ns.astype(float), y, extrapolate=False
+                        )
                         y_interp = interp_fn(t_target_ns.astype(float))
-                    except Exception as e:
+                    except Exception:
                         # fallback: set zeros and rely on injection
                         y_interp = np.zeros(n_samples, dtype=float)
                     # fill outside original data range with 0 (explicit)
@@ -171,7 +180,7 @@ class Interpolation:
         def inject_originals(arr_interp, df):
             if df.shape[0] == 0:
                 return arr_interp
-            x_ns = df['time'].values.astype('int64')
+            x_ns = df["time"].values.astype("int64")
             if n_samples == 1:
                 idx = np.zeros_like(x_ns, dtype=np.int64)
             else:
@@ -204,7 +213,7 @@ class Interpolation:
         dfs_interp = []
         for i in range(len(dfs)):
             df_interp = pd.DataFrame(arrays_interp[i], columns=cols, index=t_target)
-            df_interp['valid'] = masks[i]
+            df_interp["valid"] = masks[i]
             dfs_interp.append(df_interp)
 
         # ** Crop to overlapping window across all dfs' valid masks if requested
@@ -218,12 +227,12 @@ class Interpolation:
             else:
                 warnings.warn(
                     "Cannot crop to overlapping window because the datasets have no temporal overlap.",
-                    UserWarning
+                    UserWarning,
                 )
 
         # ** Drop the mask column before returning
         for i in range(len(dfs_interp)):
-            if 'valid' in dfs_interp[i].columns:
-                dfs_interp[i] = dfs_interp[i].drop(columns='valid')
+            if "valid" in dfs_interp[i].columns:
+                dfs_interp[i] = dfs_interp[i].drop(columns="valid")
 
         return tuple(dfs_interp)

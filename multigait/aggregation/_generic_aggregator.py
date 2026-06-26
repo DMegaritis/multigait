@@ -172,7 +172,9 @@ class GenericAggregator(AggregatorBase):
         "alpha",
     ]
 
-    _ALL_WB_AGGS: typing.ClassVar[dict[str, tuple[str, typing.Union[str, typing.Callable]]]] = {
+    _ALL_WB_AGGS: typing.ClassVar[
+        dict[str, tuple[str, typing.Union[str, typing.Callable]]]
+    ] = {
         "wb_all_sum": ("duration_s", "count"),
         "walkdur_all_sum": ("duration_s", "sum"),
         "wbsteps_all_sum": ("n_raw_initial_contacts", "sum"),
@@ -254,7 +256,6 @@ class GenericAggregator(AggregatorBase):
 
     filtered_wb_dmos_: pd.DataFrame
 
-
     class PredefinedParameters:
         multimobility_data: Final = MappingProxyType(
             {
@@ -316,12 +317,22 @@ class GenericAggregator(AggregatorBase):
         groupby = self.groupby if self.groupby is None else list(self.groupby)
 
         if not any(col in self.wb_dmos.columns for col in self.INPUT_COLUMNS):
-            raise ValueError(f"None of the valid input columns {self.INPUT_COLUMNS} found in the passed dataframe.")
+            raise ValueError(
+                f"None of the valid input columns {self.INPUT_COLUMNS} found in the passed dataframe."
+            )
 
-        if groupby and not all(col in self.wb_dmos.reset_index().columns for col in groupby):
-            raise ValueError(f"Not all groupby columns {self.groupby} found in the passed dataframe.")
+        if groupby and not all(
+            col in self.wb_dmos.reset_index().columns for col in groupby
+        ):
+            raise ValueError(
+                f"Not all groupby columns {self.groupby} found in the passed dataframe."
+            )
 
-        data_correct_index = wb_dmos.reset_index().set_index([*(groupby or []), self.unique_wb_id_column]).sort_index()
+        data_correct_index = (
+            wb_dmos.reset_index()
+            .set_index([*(groupby or []), self.unique_wb_id_column])
+            .sort_index()
+        )
 
         if not data_correct_index.index.is_unique:
             raise ValueError(
@@ -357,9 +368,14 @@ class GenericAggregator(AggregatorBase):
             # We remove all individual elements from the data that are flagged as implausible in the data mask.
             self.filtered_wb_dmos_ = data_correct_index.where(wb_dmos_mask)
             # And then we need to consider some special cases:
-            if "duration_s" in data_correct_index.columns and "duration_s" in wb_dmos_mask.columns:
+            if (
+                "duration_s" in data_correct_index.columns
+                and "duration_s" in wb_dmos_mask.columns
+            ):
                 # If the duration is implausible, we need to remove the whole walking bout
-                self.filtered_wb_dmos_ = self.filtered_wb_dmos_.where(wb_dmos_mask["duration_s"])
+                self.filtered_wb_dmos_ = self.filtered_wb_dmos_.where(
+                    wb_dmos_mask["duration_s"]
+                )
             if "walking_speed_mps" in data_correct_index.columns:
                 walking_speed_filter = pd.Series(True, index=data_correct_index.index)
                 # Walking speed is also implausible, if stride length or cadence are implausible
@@ -367,19 +383,27 @@ class GenericAggregator(AggregatorBase):
                     walking_speed_filter &= wb_dmos_mask["stride_length_m"]
                 if "cadence_spm" in wb_dmos_mask.columns:
                     walking_speed_filter &= wb_dmos_mask["cadence_spm"]
-                self.filtered_wb_dmos_.loc[:, "walking_speed_mps"] = self.filtered_wb_dmos_.loc[
-                    :, "walking_speed_mps"
-                ].where(walking_speed_filter)
+                self.filtered_wb_dmos_.loc[:, "walking_speed_mps"] = (
+                    self.filtered_wb_dmos_.loc[:, "walking_speed_mps"].where(
+                        walking_speed_filter
+                    )
+                )
         else:
             self.filtered_wb_dmos_ = data_correct_index.copy()
 
-        available_filters_and_aggs = self._select_aggregations(data_correct_index.columns)
-        self.aggregated_data_ = self._apply_aggregations(self.filtered_wb_dmos_, groupby, available_filters_and_aggs)
+        available_filters_and_aggs = self._select_aggregations(
+            data_correct_index.columns
+        )
+        self.aggregated_data_ = self._apply_aggregations(
+            self.filtered_wb_dmos_, groupby, available_filters_and_aggs
+        )
         self.aggregated_data_ = self._fillna_count_columns(self.aggregated_data_)
         self.aggregated_data_ = self._convert_units(self.aggregated_data_)
 
         if self.use_original_names is False:
-            self.aggregated_data_ = self.aggregated_data_.rename(columns=self.ALTERNATIVE_NAMES, errors="ignore")
+            self.aggregated_data_ = self.aggregated_data_.rename(
+                columns=self.ALTERNATIVE_NAMES, errors="ignore"
+            )
 
         return self
 
@@ -410,7 +434,9 @@ class GenericAggregator(AggregatorBase):
                 continue
 
             # check if the property to aggregate is contained in data columns
-            available_aggs = {key: value for key, value in aggs.items() if value[0] in data_columns}
+            available_aggs = {
+                key: value for key, value in aggs.items() if value[0] in data_columns
+            }
             if available_aggs:
                 available_filters_and_aggs.append((filt, available_aggs))
         return available_filters_and_aggs
@@ -419,7 +445,9 @@ class GenericAggregator(AggregatorBase):
     def _apply_aggregations(
         filtered_data: pd.DataFrame,
         groupby: typing.Optional[list[str]],
-        available_filters_and_aggs: list[tuple[str, dict[str, tuple[str, typing.Union[str, typing.Callable]]]]],
+        available_filters_and_aggs: list[
+            tuple[str, dict[str, tuple[str, typing.Union[str, typing.Callable]]]]
+        ],
     ) -> pd.DataFrame:
         """
         Apply duration filters and aggregation functions.
@@ -434,7 +462,9 @@ class GenericAggregator(AggregatorBase):
             if groupby:
                 data_to_agg = internal_filtered.groupby(groupby)
             else:
-                data_to_agg = internal_filtered.groupby(pd.Series("all_wbs", index=internal_filtered.index))
+                data_to_agg = internal_filtered.groupby(
+                    pd.Series("all_wbs", index=internal_filtered.index)
+                )
             aggregated_results.append(data_to_agg.agg(**agg))
         return pd.concat(aggregated_results, axis=1)
 

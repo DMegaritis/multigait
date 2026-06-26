@@ -4,6 +4,7 @@
 
 from multigait.pipeline.utils.datapoint_check import check_gait_datapoint_completeness
 from examples.example_data.example_constructor import construct_datapoint_from_files
+
 data = construct_datapoint_from_files()
 
 # Checking if the datapoint is complete (if incomplete pipeline might work or fail depending on the missing aspects)
@@ -15,7 +16,7 @@ if not is_complete:
 
 from multigait.pipeline.utils._stride_filtering import StrideFiltering
 from multigait.pipeline.utils._wb_assembly import WbAssembly
-from multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
+from multigait.pipeline.utils._thresholds import get_thresholds
 from multigait.aggregation._generic_aggregator import GenericAggregator
 from multigait.WS.walking_speed import Ws
 from multigait.SL.SL1 import WeinbergSL
@@ -69,10 +70,11 @@ pipeline.aggregated_parameters_
 # Running the preliminary suggested pipeline separately.
 # For this, we do not need to specify the algorithms to be used.
 
-from multigait.pipeline.multimobility_pipeline import MultiGaitPipelineMultimorbidityImpaired, MultiGaitPipelineHealthyCoMorbidity
-
-pipeline = MultiGaitPipelineMultimorbidityImpaired(
+from multigait.pipeline.multimobility_pipeline import (
+    MultiGaitPipelineMultimorbidityImpaired,
 )
+
+pipeline = MultiGaitPipelineMultimorbidityImpaired()
 
 pipeline.safe_run(data)
 
@@ -90,4 +92,3 @@ pipeline.per_wb_parameters_
 # %%
 # And the aggregated parameters:
 pipeline.aggregated_parameters_
-

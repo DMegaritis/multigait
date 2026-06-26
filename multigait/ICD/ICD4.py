@@ -2,14 +2,12 @@ import pandas as pd
 import numpy as np
 from typing_extensions import Self
 from scipy import signal
-from mobgap.data_transform import (
-    chain_transformers,
-    ButterworthFilter
-)
+from mobgap.data_transform import chain_transformers, ButterworthFilter
 from typing import Literal
 from multigait.ICD.utils.find_maxima import _find_maxima
 from multigait.ICD.utils.zero_crossings import detect_zero_crossings
 from multigait.ICD.base_ic import BaseIcDetector
+
 
 class ZijlstraIC(BaseIcDetector):
     """
@@ -49,7 +47,11 @@ class ZijlstraIC(BaseIcDetector):
 
     ic_list_: pd.DataFrame
 
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"]="wrist") -> None:
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+    ) -> None:
         """
         Initialise the ZijlstraIC detector.
 
@@ -60,7 +62,9 @@ class ZijlstraIC(BaseIcDetector):
         """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
 
@@ -99,18 +103,31 @@ class ZijlstraIC(BaseIcDetector):
             # Only the anteroposterior is used for the lowerback possition
             acc = data["acc_pa"].to_numpy()
         elif self.version == "wrist":
-            cols = ['acc_is', 'acc_ml', 'acc_pa']
+            cols = ["acc_is", "acc_ml", "acc_pa"]
             acc = np.linalg.norm(self.data[cols].values, axis=1)
 
         # Detrend data to make the signal is around 0
         detrended_data = signal.detrend(acc)
 
         # Low pass Butterworth as filter chain (the first filter has a fixed cutoff of 20 Hz)
-        filter_chain = [("butter_1", ButterworthFilter(order=4, cutoff_freq_hz=20, filter_type='lowpass')),
-                        ("butter_2", ButterworthFilter(order=4, cutoff_freq_hz=self.cutoff, filter_type='lowpass'))]
+        filter_chain = [
+            (
+                "butter_1",
+                ButterworthFilter(order=4, cutoff_freq_hz=20, filter_type="lowpass"),
+            ),
+            (
+                "butter_2",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=self.cutoff, filter_type="lowpass"
+                ),
+            ),
+        ]
 
         acc_pa_butter = np.asarray(
-            chain_transformers(detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+            chain_transformers(
+                detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         self.final_signal_ = acc_pa_butter
 

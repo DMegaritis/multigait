@@ -7,10 +7,13 @@ from scipy.signal import find_peaks, hilbert
 from multigait.utils.array import (
     merge_interval,
     bool_array_to_start_end,
-    start_end_array_to_bool)
+    start_end_array_to_bool,
+)
 
 
-def active_regions_from_hilbert_envelop(sig: np.ndarray, smooth_window: int, duration: int) -> np.ndarray:
+def active_regions_from_hilbert_envelop(
+    sig: np.ndarray, smooth_window: int, duration: int
+) -> np.ndarray:
     """Detect periods of activity using a Hilbert transform and adaptive threshold.
 
     Computes the analytical signal via the Hilbert transform, smooths the resulting envelope,
@@ -104,7 +107,9 @@ def _find_pulse_train_end(x: np.ndarray, step_threshold: float) -> np.ndarray:
 
 @njit(cache=True)
 def find_pulse_trains(
-    x: np.ndarray, initial_distance_threshold_samples: float, step_threshold_margin: float
+    x: np.ndarray,
+    initial_distance_threshold_samples: float,
+    step_threshold_margin: float,
 ) -> np.ndarray:
     start_ends = []
     i = 0
@@ -160,7 +165,11 @@ def find_intersections(intervals_a: np.ndarray, intervals_b: np.ndarray) -> np.n
                 end = min(interval.end, overlap.end)
                 overlap_intervals.append([start, end])
 
-    return merge_interval(np.array(overlap_intervals)) if len(overlap_intervals) != 0 else np.array([])
+    return (
+        merge_interval(np.array(overlap_intervals))
+        if len(overlap_intervals) != 0
+        else np.array([])
+    )
 
 
 class NoActivePeriodsDetectedError(Exception):
@@ -172,10 +181,12 @@ def find_active_period_peak_threshold(
     *,
     signal: np.ndarray,
     min_active_period_duration: int,
-    hilbert_window_size: int
+    hilbert_window_size: int,
 ) -> float:
     # Find pre-detection of 'active' periods in order to estimate the amplitude of acceleration peaks
-    active_regions = active_regions_from_hilbert_envelop(signal, hilbert_window_size, hilbert_window_size)
+    active_regions = active_regions_from_hilbert_envelop(
+        signal, hilbert_window_size, hilbert_window_size
+    )
 
     if not np.any(active_regions):
         raise NoActivePeriodsDetectedError()
@@ -189,7 +200,9 @@ def find_active_period_peak_threshold(
     if len(active_regions_start_end) == 0:
         raise NoActivePeriodsDetectedError()
 
-    final_active_area = signal[start_end_array_to_bool(active_regions_start_end, len(active_regions))]
+    final_active_area = signal[
+        start_end_array_to_bool(active_regions_start_end, len(active_regions))
+    ]
 
     _, props_p = find_peaks(final_active_area, height=0)
     _, props_n = find_peaks(-final_active_area, height=0)
@@ -246,6 +259,7 @@ def combine_intervals(intervals: np.ndarray, max_gap: int = 0) -> np.ndarray:
     merged_list = _merge_overlap_numba(sorted_intervals, max_gap)
     return np.array(merged_list)
 
+
 @njit
 def _merge_overlap_numba(intervals: np.ndarray, max_gap: int) -> numba.typed.List:
     """Helper function for merging intervals using numba for speed."""
@@ -256,7 +270,12 @@ def _merge_overlap_numba(intervals: np.ndarray, max_gap: int) -> numba.typed.Lis
         current_start, current_end = intervals[i]
         last_start, last_end = merged[-1]
 
-        if last_start <= current_start <= (last_end + max_gap) <= (current_end + max_gap):
+        if (
+            last_start
+            <= current_start
+            <= (last_end + max_gap)
+            <= (current_end + max_gap)
+        ):
             merged[-1][1] = current_end
         else:
             merged.append(intervals[i])

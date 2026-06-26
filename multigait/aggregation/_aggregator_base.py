@@ -4,6 +4,7 @@ from typing_extensions import Self, Unpack
 import pandas as pd
 from tpcp import Algorithm
 
+
 class AggregatorBase(Algorithm):
     """
     Base class for all aggregation implementations.

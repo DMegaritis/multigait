@@ -10,6 +10,7 @@ Intended usage:
 
 final_strides: DataFrame indexed by (wb_id, s_id) where level 0 is wb_id.
 """
+
 from typing import Iterable, Optional, Sequence
 import numpy as np
 import pandas as pd
@@ -27,7 +28,7 @@ def _rmssd_series(series: pd.Series) -> float:
     dif = series.dropna().diff().dropna()
     if dif.size == 0:
         return np.nan
-    return float(np.sqrt(np.mean(dif.values ** 2)))
+    return float(np.sqrt(np.mean(dif.values**2)))
 
 
 def within_wb_var(
@@ -145,7 +146,11 @@ def within_wb_var(
     # After groupby.apply the rmssd DataFrame may have a name in its index; ensure alignment with mean/cv indexes
     # If rmssd comes back as a Series (happens for single-column), convert to DataFrame
     if isinstance(rmssd, pd.Series):
-        rmssd = rmssd.unstack(level=-1) if isinstance(rmssd.index, pd.MultiIndex) else rmssd.to_frame()
+        rmssd = (
+            rmssd.unstack(level=-1)
+            if isinstance(rmssd.index, pd.MultiIndex)
+            else rmssd.to_frame()
+        )
 
     # rmssd already yields NaN if not enough diffs, but ensure mask consistency
     # Reindex rmssd like mean (index and columns) to ensure consistent layout, then mask
@@ -172,7 +177,9 @@ def within_wb_var(
         else:
             cv_piece = cv[[cv_col]]
         if rmssd_col not in rmssd.columns:
-            rmssd_piece = pd.DataFrame(index=mean.index, columns=[rmssd_col], data=np.nan)
+            rmssd_piece = pd.DataFrame(
+                index=mean.index, columns=[rmssd_col], data=np.nan
+            )
         else:
             rmssd_piece = rmssd[[rmssd_col]]
         parts.append(cv_piece)

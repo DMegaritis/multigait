@@ -8,7 +8,7 @@ from mobgap.data_transform import (
     Resample,
     chain_transformers,
     ButterworthFilter,
-    CwtFilter
+    CwtFilter,
 )
 from multigait.ICD.utils.dominant_frequency import dominant_freqency
 from multigait.ICD.base_ic import BaseIcDetector
@@ -54,19 +54,24 @@ class McCamleyIC(BaseIcDetector):
     _DOWNSAMPLED_RATE = 50
     ic_list_: pd.DataFrame
 
-
-    def __init__(self, *, version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist") -> None:
+    def __init__(
+        self,
+        *,
+        version: Literal["original_lowback", "improved_lowback", "wrist"] = "wrist",
+    ) -> None:
         """
-       Initialize the class.
+        Initialize the class.
 
-       Parameters
-       ----------
-       version : str, optional
-           The version of the algorithm to use. In this release we support only "wrist".
-       """
+        Parameters
+        ----------
+        version : str, optional
+            The version of the algorithm to use. In this release we support only "wrist".
+        """
 
         if version not in ("original_lowback", "improved_lowback", "wrist"):
-            raise ValueError(f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'.")
+            raise ValueError(
+                f"Unsupported version: {version}. Must be 'original_lowback', 'improved_lowback', or 'wrist'."
+            )
 
         self.version = version
 
@@ -100,7 +105,7 @@ class McCamleyIC(BaseIcDetector):
         # selecting data based on version
         if self.version == "wrist":
             # we use the norm of the acceleration vector for the wrist version
-            cols = ['acc_is', 'acc_ml', 'acc_pa']
+            cols = ["acc_is", "acc_ml", "acc_pa"]
             acc = np.linalg.norm(self.data[cols].values, axis=1)
         elif self.version in ("original_lowback", "improved_lowback"):
             # Only the inferosuperior (vertical) is used for the lowback version
@@ -108,15 +113,28 @@ class McCamleyIC(BaseIcDetector):
 
         # Resample the signal to 50 Hz using mobgap filters
         filter_chain = [("resampling", Resample(self._DOWNSAMPLED_RATE))]
-        acc_downsampled = chain_transformers(acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz)
+        acc_downsampled = chain_transformers(
+            acc, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+        )
 
         # Detrend data
         detrended_data = signal.detrend(acc_downsampled)
 
         # Low pass Butterworth
         cutoff = 20
-        filter_chain = [("butter", ButterworthFilter(order=4, cutoff_freq_hz=cutoff, filter_type='lowpass'))]
-        acc_butter = np.asarray(chain_transformers(detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz))
+        filter_chain = [
+            (
+                "butter",
+                ButterworthFilter(
+                    order=4, cutoff_freq_hz=cutoff, filter_type="lowpass"
+                ),
+            )
+        ]
+        acc_butter = np.asarray(
+            chain_transformers(
+                detrended_data, filter_chain, sampling_rate_hz=self.sampling_rate_hz
+            )
+        )
 
         # Cumulative trapezoidal integration
         integrated_data = integrate.cumulative_trapezoid(acc_butter, initial=0)
@@ -128,16 +146,24 @@ class McCamleyIC(BaseIcDetector):
         if self.cwt == "fixed":
             freq = 1
         elif self.cwt == "adaptive":
-            freq = dominant_freqency(integrated_data, sampling_rate_hz=self._DOWNSAMPLED_RATE)
+            freq = dominant_freqency(
+                integrated_data, sampling_rate_hz=self._DOWNSAMPLED_RATE
+            )
             # if freq is 0 it is turned to 1.0, if it is above 5 it is turned to 5.0. A frequency higher than 5 is not adequate to smooth the signal
             if freq == 0:
                 freq = 1.0
             elif freq > 5:
                 freq = 5.0
 
-        filter_chain = [("cwt", CwtFilter(wavelet='gaus1', center_frequency_hz=freq)),
-                        ("resampling", Resample(self.sampling_rate_hz))]
-        data_cwt_upsampled = np.asarray(chain_transformers(integrated_data, filter_chain, sampling_rate_hz=self._DOWNSAMPLED_RATE))
+        filter_chain = [
+            ("cwt", CwtFilter(wavelet="gaus1", center_frequency_hz=freq)),
+            ("resampling", Resample(self.sampling_rate_hz)),
+        ]
+        data_cwt_upsampled = np.asarray(
+            chain_transformers(
+                integrated_data, filter_chain, sampling_rate_hz=self._DOWNSAMPLED_RATE
+            )
+        )
 
         self.final_signal_ = data_cwt_upsampled
 
@@ -147,8 +173,8 @@ class McCamleyIC(BaseIcDetector):
 
         # If no ICs detected then we shortcut by returning an empty df
         if ic_indices.size == 0:
-            self.ic_list_ = pd.DataFrame(columns=['ic'])
-            self.ic_list_.index.name = 'step_id'
+            self.ic_list_ = pd.DataFrame(columns=["ic"])
+            self.ic_list_.index.name = "step_id"
             return self
 
         # # This is a second cwt for toe off detection it is commented because it is not a primary aim
@@ -165,7 +191,9 @@ class McCamleyIC(BaseIcDetector):
 
         for i in range(1, len(ic_indices)):
             if ic_indices[i] - filtered_ics_close[-1] > 0.25 * self.sampling_rate_hz:
-                filtered_ics_close.append(ic_indices[i])  # keeping only if sufficiently spaced
+                filtered_ics_close.append(
+                    ic_indices[i]
+                )  # keeping only if sufficiently spaced
 
         # Removing ICs with a distance > 2.25s. We first compare n with n-1 and if further than 2.25s we compare n with n+1.
         # We remove n if both are further than 2.25s.
@@ -182,7 +210,9 @@ class McCamleyIC(BaseIcDetector):
             filtered_ics_away.append(curr)
 
         # Checking last value with distance to the previous one
-        if (filtered_ics_close[-1] - filtered_ics_away[-1]) <= 2.25 * self.sampling_rate_hz:
+        if (
+            filtered_ics_close[-1] - filtered_ics_away[-1]
+        ) <= 2.25 * self.sampling_rate_hz:
             filtered_ics_away.append(filtered_ics_close[-1])
 
         final_ics = pd.DataFrame(columns=["ic"]).rename_axis(index="step_id")

@@ -3,8 +3,8 @@ import pandas as pd
 import pytest
 from multigait.ICD.ICD6 import GuIC
 
-class TestGuIC:
 
+class TestGuIC:
     @pytest.mark.parametrize("version", ["improved_wrist"])
     def test_invalid_version_parameter(self, version):
         with pytest.raises(ValueError):
@@ -13,7 +13,7 @@ class TestGuIC:
     @pytest.mark.parametrize("version", ["improved_wrist"])
     def test_no_ics_detected_empty_signal(self, version):
         """Empty signal should return empty ic_list_ DataFrame."""
-        data = pd.DataFrame(np.zeros((1000, 3)), columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(np.zeros((1000, 3)), columns=["acc_is", "acc_ml", "acc_pa"])
         algo = GuIC(version=version)
         result = algo.detect(data, sampling_rate_hz=100)
         ic_list = result.ic_list_
@@ -26,7 +26,9 @@ class TestGuIC:
     @pytest.mark.parametrize("version", ["improved_wrist"])
     def test_low_variance_signal_returns_empty(self, version):
         """Signal with very low std deviation should return empty ic_list_."""
-        data = pd.DataFrame(np.ones((1000, 3)) * 0.01, columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(
+            np.ones((1000, 3)) * 0.01, columns=["acc_is", "acc_ml", "acc_pa"]
+        )
         algo = GuIC(version=version)
         result = algo.detect(data, sampling_rate_hz=100)
         ic_list = result.ic_list_
@@ -39,7 +41,9 @@ class TestGuIC:
     def test_random_signal_runs(self, version):
         """Random noise should run without errors and return a DataFrame."""
         np.random.seed(42)
-        data = pd.DataFrame(np.random.rand(2000, 3), columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(
+            np.random.rand(2000, 3), columns=["acc_is", "acc_ml", "acc_pa"]
+        )
         algo = GuIC(version=version)
         result = algo.detect(data, sampling_rate_hz=100)
 
@@ -48,7 +52,7 @@ class TestGuIC:
         assert result.ic_list_.index.name == "step_id"
         if not result.ic_list_.empty:
             # IC indices should be within signal bounds
-            assert result.ic_list_["ic"].between(0, len(data)-1).all()
+            assert result.ic_list_["ic"].between(0, len(data) - 1).all()
             # IC values should be integers
             assert np.issubdtype(result.ic_list_["ic"].dtype, np.integer)
 
@@ -56,7 +60,9 @@ class TestGuIC:
     def test_reproducibility_on_random_signal(self, version):
         """Algorithm should produce the same ICs for the same input (deterministic)."""
         np.random.seed(42)
-        data = pd.DataFrame(np.random.rand(2000, 3), columns=['acc_is', 'acc_ml', 'acc_pa'])
+        data = pd.DataFrame(
+            np.random.rand(2000, 3), columns=["acc_is", "acc_ml", "acc_pa"]
+        )
         algo1 = GuIC(version=version)
         result1 = algo1.detect(data, sampling_rate_hz=100)
 

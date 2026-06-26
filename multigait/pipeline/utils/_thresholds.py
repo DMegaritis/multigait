@@ -50,7 +50,13 @@ def _max_allowable_stride_length(height_m: float) -> float:
     v_max = np.sqrt(froude_number * 9.81 * leg_length)
     max_vertical_displacement = 0.038 * v_max**2
     # Zijlstra style inverted-pendulum formula
-    max_sl = 2 * 2 * np.sqrt(2 * leg_length * max_vertical_displacement - max_vertical_displacement**2)
+    max_sl = (
+        2
+        * 2
+        * np.sqrt(
+            2 * leg_length * max_vertical_displacement - max_vertical_displacement**2
+        )
+    )
     return float(max_sl)
 
 
@@ -89,13 +95,17 @@ def apply_thresholds(
     # Optionally adjust stride_length_m max by height-based physical limit
     if height_m is not None and "stride_length_m" in thr.index:
         computed_max_sl = _max_allowable_stride_length(height_m)
-        thr.loc["stride_length_m", "max"] = max(thr.loc["stride_length_m", "max"], computed_max_sl)
+        thr.loc["stride_length_m", "max"] = max(
+            thr.loc["stride_length_m", "max"], computed_max_sl
+        )
 
     # DMOs to check: intersection of input columns and threshold index
     dmos_to_check = [c for c in input_data.columns if c in thr.index]
 
     # Prepare output frame with pandas BooleanDtype (supports NA)
-    result = pd.DataFrame(index=input_data.index, columns=input_data.columns, dtype="boolean")
+    result = pd.DataFrame(
+        index=input_data.index, columns=input_data.columns, dtype="boolean"
+    )
 
     # Vectorised comparisons per column
     for dmo in dmos_to_check:

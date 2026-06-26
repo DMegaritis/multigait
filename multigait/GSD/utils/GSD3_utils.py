@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 
+
 def window(a, w=4, o=2, copy=False):
     """
     Create overlapping windows from a 1D array.
@@ -94,7 +95,9 @@ def calc_activity_parameter(data: np.ndarray) -> np.ndarray:
     return (max_val - win_sum) / max_val
 
 
-def resample_to_orginal_data_length(results: np.ndarray, len_original_data: int) -> np.ndarray:
+def resample_to_orginal_data_length(
+    results: np.ndarray, len_original_data: int
+) -> np.ndarray:
     """
     Resample an array to match the length of the original data using nearest interpolation.
 
@@ -110,9 +113,10 @@ def resample_to_orginal_data_length(results: np.ndarray, len_original_data: int)
     np.ndarray
         Resampled array matching the length of the original data.
     """
-    interpolator = interp1d(np.arange(len(results)), results, kind='nearest')
+    interpolator = interp1d(np.arange(len(results)), results, kind="nearest")
     new_x = np.linspace(0, len(results) - 1, len_original_data)
     return interpolator(new_x)
+
 
 def generate_gs_list(detected_walking: np.ndarray, sampling_rate=1):
     """
@@ -127,9 +131,13 @@ def generate_gs_list(detected_walking: np.ndarray, sampling_rate=1):
     """
     cuts = np.where(np.diff(detected_walking) != 0)[0] + 1
     wbs = np.split(detected_walking, cuts)
-    wb_list = [(int(c / sampling_rate), int((c + len(wb)) / sampling_rate)) for c, wb in zip([0] + list(cuts), wbs) if wb[0] == True]
+    wb_list = [
+        (int(c / sampling_rate), int((c + len(wb)) / sampling_rate))
+        for c, wb in zip([0] + list(cuts), wbs)
+        if wb[0] == True
+    ]
 
     # Create a DataFrame from the list of tuples
-    df = pd.DataFrame(wb_list, columns=['start', 'end'])
-    df.index.name = 'gs_id'
+    df = pd.DataFrame(wb_list, columns=["start", "end"])
+    df.index.name = "gs_id"
     return df

@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def check_gait_datapoint_completeness(datapoint, verbose=True) -> bool:
     """
     Check if a gait datapoint has all required attributes and required fields,
@@ -27,7 +28,7 @@ def check_gait_datapoint_completeness(datapoint, verbose=True) -> bool:
         "recording_metadata",
         "participant_id",
         "group_label",
-        "sampling_rate_hz"
+        "sampling_rate_hz",
     ]
     for attr in expected_attrs:
         if not hasattr(datapoint, attr):
@@ -61,9 +62,12 @@ def check_gait_datapoint_completeness(datapoint, verbose=True) -> bool:
         "leg_length_cm",
         "sensor_height_m",
         "sensor_locations",
-        "shoe_length_cm"
+        "shoe_length_cm",
     ]
-    if hasattr(datapoint, "participant_metadata") and getattr(datapoint, "participant_metadata") is not None:
+    if (
+        hasattr(datapoint, "participant_metadata")
+        and getattr(datapoint, "participant_metadata") is not None
+    ):
         meta = getattr(datapoint, "participant_metadata")
         for field in participant_fields:
             if field not in meta:
@@ -78,9 +82,12 @@ def check_gait_datapoint_completeness(datapoint, verbose=True) -> bool:
     recording_fields = [
         "start_date_time_iso",
         "sampling_rate_hz",
-        "recording_identifier"
+        "recording_identifier",
     ]
-    if hasattr(datapoint, "recording_metadata") and getattr(datapoint, "recording_metadata") is not None:
+    if (
+        hasattr(datapoint, "recording_metadata")
+        and getattr(datapoint, "recording_metadata") is not None
+    ):
         meta = getattr(datapoint, "recording_metadata")
         for field in recording_fields:
             if field not in meta:
@@ -92,7 +99,10 @@ def check_gait_datapoint_completeness(datapoint, verbose=True) -> bool:
             missing.append(f"recording_metadata.{field} (metadata missing)")
 
     # group_label check for expected structure
-    if hasattr(datapoint, "group_label") and getattr(datapoint, "group_label") is not None:
+    if (
+        hasattr(datapoint, "group_label")
+        and getattr(datapoint, "group_label") is not None
+    ):
         group_label = getattr(datapoint, "group_label")
         if not isinstance(group_label, dict):
             missing.append("group_label (not a dict)")

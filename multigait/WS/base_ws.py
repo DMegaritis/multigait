@@ -5,6 +5,7 @@ Intended to be a lightweight drop-in base class for walking-speed calculators th
 - keeps the tpcp.Algorithm integration (action methods tuple) so it can be used where Algorithm-derived classes are expected
 
 """
+
 from typing import Any, Optional
 import copy
 

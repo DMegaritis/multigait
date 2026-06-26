@@ -6,7 +6,10 @@ import numba
 import numpy as np
 from numba import njit
 
-def create_sliding_windows(array: np.ndarray, window_size_samples: int, overlap_samples: int) -> np.ndarray:
+
+def create_sliding_windows(
+    array: np.ndarray, window_size_samples: int, overlap_samples: int
+) -> np.ndarray:
     """Generate overlapping windows along the first axis of the array.
 
     This produces a view of the array, not a copy. Modifying the output will affect the original array.
@@ -39,7 +42,9 @@ def create_sliding_windows(array: np.ndarray, window_size_samples: int, overlap_
     stride = window_size_samples - overlap_samples
 
     # Create the sliding window view and apply the stride
-    windowed_view = np_stride_window(array, window_shape=(window_size_samples,), axis=0)[::stride]
+    windowed_view = np_stride_window(
+        array, window_shape=(window_size_samples,), axis=0
+    )[::stride]
 
     if array.ndim > 1:
         # Move the window dimension after the first axis to maintain consistent shape
@@ -87,7 +92,9 @@ def merge_interval(input_intervals: np.ndarray, gap_size: int = 0) -> np.ndarray
 
 
 @njit
-def _merge_intervals_numba(sorted_intervals: np.ndarray, gap_size: int) -> numba.typed.List:
+def _merge_intervals_numba(
+    sorted_intervals: np.ndarray, gap_size: int
+) -> numba.typed.List:
     """Numba-accelerated merge for sorted intervals."""
     merged = numba.typed.List()
     merged.append(sorted_intervals[0])
@@ -139,7 +146,9 @@ def bool_array_to_start_end(bool_array: np.ndarray) -> np.ndarray:
     return np.array([[s.start, s.stop] for s in slices])
 
 
-def start_end_array_to_bool(start_end_array: np.ndarray, pad_to_length: Optional[int] = None) -> np.ndarray:
+def start_end_array_to_bool(
+    start_end_array: np.ndarray, pad_to_length: Optional[int] = None
+) -> np.ndarray:
     """Convert a start-end interval array back to a boolean array.
 
     The intervals are inclusive at start and exclusive at end: [start, end).

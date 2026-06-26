@@ -12,13 +12,24 @@ numpy = ">=1.25.2"
 matplotlib = ">=3.7.2,<4"
 typing-extensions = "^4.15.0"
 mobgap = "^1.0.0"
-# Optional package for users if needed
-# cwa_reader_rs = { git = "https://github.com/mobilise-d/cwa_reader_rs.git", optional = true }
+poethepoet = ">=0.22.0,<0.23"
 
 [tool.poetry.dev-dependencies]
 pytest = "==8.4.2"
 numpydoc = "==1.9.0"
+ruff = ">=0.5.0"
+pytest-cov = ">=4.1.0,<5"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poe.tasks]
+_format = "ruff format ."
+_auto_fix = "ruff check . --fix-only --show-fixes --exit-zero"
+format = ["_auto_fix", "_format"]
+lint = { cmd = "ruff check src --fix", help = "Lint all files with ruff." }
+_lint_ci = "ruff check src --output-format=github"
+_check_format = "ruff format . --check"
+ci_check = { sequence = ["_check_format", "_lint_ci"], help = "Check all potential format and linting issues." }
+test = { cmd = "pytest tests --cov=src/multigait --cov-report=term-missing --cov-report=xml", help = "Run Pytest with coverage." }

@@ -1,5 +1,5 @@
-from multigait.ICD.ICD1 import MicoAmigoIC
-from multigait.utils.data_loader import load_imu_data_wrist
+from src.multigait.ICD.ICD1 import MicoAmigoIC
+from src.multigait import load_imu_data_wrist
 
 """
 This is an example on how to use the MicoAmigo algo to detect initial contacts.

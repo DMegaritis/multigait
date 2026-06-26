@@ -2,7 +2,9 @@
 # Load example data
 # Loading an example datapoint with data from a wrist worn device
 
-from multigait.pipeline.utils.datapoint_check import check_gait_datapoint_completeness
+from src.multigait.pipeline.utils.datapoint_check import (
+    check_gait_datapoint_completeness,
+)
 from examples.example_data.example_constructor import construct_datapoint_from_files
 
 data = construct_datapoint_from_files()
@@ -14,15 +16,15 @@ if not is_complete:
 # %%
 # Running as a single pipeline
 
-from multigait.pipeline.utils._stride_filtering import StrideFiltering
-from multigait.pipeline.utils._wb_assembly import WbAssembly
-from multigait.pipeline.utils._thresholds import get_thresholds
-from multigait.aggregation._generic_aggregator import GenericAggregator
-from multigait.WS.walking_speed import Ws
-from multigait.SL.SL1 import WeinbergSL
-from multigait.CAD.cad import Cadence
-from multigait.ICD.ICD2 import McCamleyIC
-from multigait.GSD.GSD3 import KheirkhahanGSD
+from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
+from src.multigait.pipeline.utils._wb_assembly import WbAssembly
+from src.multigait.pipeline.utils._thresholds import get_thresholds
+from src.multigait.aggregation._generic_aggregator import GenericAggregator
+from src.multigait import Ws
+from src.multigait import WeinbergSL
+from src.multigait.CAD.cad import Cadence
+from src.multigait.ICD.ICD2 import McCamleyIC
+from src.multigait import KheirkhahanGSD
 
 gsd = KheirkhahanGSD(version="wrist")
 icd = McCamleyIC()
@@ -34,7 +36,7 @@ wba = WbAssembly()
 thresholds = get_thresholds()
 agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 
-from multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
+from src.multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
 
 pipeline = MultiGaitPipeline(
     gait_sequence_detection=gsd,
@@ -70,7 +72,7 @@ pipeline.aggregated_parameters_
 # Running the preliminary suggested pipeline separately.
 # For this, we do not need to specify the algorithms to be used.
 
-from multigait.pipeline.multimobility_pipeline import (
+from src.multigait.pipeline.multimobility_pipeline import (
     MultiGaitPipelineMultimorbidityImpaired,
 )
 

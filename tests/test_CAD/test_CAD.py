@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas._testing import assert_frame_equal
-from multigait.CAD.cad import Cadence
+from src.multigait.CAD.cad import Cadence
 
 
 class TestCadence:

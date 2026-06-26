@@ -1,5 +1,5 @@
-from multigait.SL.SL2 import KimSL
-from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
+from src.multigait.SL.SL2 import KimSL
+from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """
 This is an example on how to use the intensity based Kim stride length algorithm.

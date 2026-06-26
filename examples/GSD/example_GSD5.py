@@ -1,5 +1,5 @@
-from multigait.utils.data_loader import load_imu_data_wrist
-from multigait.GSD.GSD5 import KerenGSD
+from src.multigait import load_imu_data_wrist
+from src.multigait import KerenGSD
 
 """
 This is an example on how to use the Keren algo to detect gait events.

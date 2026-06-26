@@ -1,5 +1,5 @@
-from multigait.ICD.ICD6 import GuIC
-from multigait.utils.data_loader import load_imu_data_wrist
+from src.multigait.ICD.ICD6 import GuIC
+from src.multigait import load_imu_data_wrist
 
 """
 This is an example on how to use the Gu algo to detect initial contacts.

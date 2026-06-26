@@ -2,21 +2,21 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from multigait.GSD.GSD3 import KheirkhahanGSD
-from multigait.pipeline.multimobility_pipeline import (
+from src.multigait import KheirkhahanGSD
+from src.multigait.pipeline.multimobility_pipeline import (
     MultiGaitPipeline,
     MultiGaitPipelineHealthyCoMorbidity,
     MultiGaitPipelineMultimorbidityImpaired,
 )
-from multigait.CAD.cad import Cadence
-from multigait.ICD.ICD6 import GuIC
-from multigait.ICD.ICD4 import ZijlstraIC
-from multigait.SL.SL1 import WeinbergSL
-from multigait.WS.walking_speed import Ws
-from multigait.pipeline.utils._stride_filtering import StrideFiltering
-from multigait.pipeline.utils._wb_assembly import WbAssembly
-from multigait.aggregation._generic_aggregator import GenericAggregator
-from multigait.pipeline.utils._thresholds import get_thresholds
+from src.multigait.CAD.cad import Cadence
+from src.multigait.ICD.ICD6 import GuIC
+from src.multigait import ZijlstraIC
+from src.multigait import WeinbergSL
+from src.multigait import Ws
+from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
+from src.multigait.pipeline.utils._wb_assembly import WbAssembly
+from src.multigait.aggregation._generic_aggregator import GenericAggregator
+from src.multigait.pipeline.utils._thresholds import get_thresholds
 from unittest.mock import patch
 
 
@@ -195,8 +195,8 @@ class TestFullMultiGaitPipeline:
         from examples.example_data.example_constructor import (
             construct_datapoint_from_files,
         )
-        from multigait.utils.data_conversions import rename_axes_to_body
-        from multigait.SL.SL1 import WeinbergSL
+        from src.multigait import rename_axes_to_body
+        from src.multigait import WeinbergSL
 
         real_data = construct_datapoint_from_files()
         imu_data = rename_axes_to_body(real_data.data_ss)

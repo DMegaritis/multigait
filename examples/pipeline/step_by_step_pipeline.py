@@ -13,8 +13,10 @@ This example shows how to build a full analysis pipeline using multigait algorit
 # -----------------
 
 import pandas as pd
-from multigait.utils.interp import map_seconds_to_regions
-from multigait.pipeline.utils.datapoint_check import check_gait_datapoint_completeness
+from src.multigait import map_seconds_to_regions
+from src.multigait.pipeline.utils.datapoint_check import (
+    check_gait_datapoint_completeness,
+)
 from examples.example_data.example_constructor import construct_datapoint_from_files
 
 data = construct_datapoint_from_files()
@@ -29,7 +31,7 @@ if not is_complete:
 # %%
 # Step 1: GSD
 # -------------------------------
-from multigait.GSD.GSD3 import KheirkhahanGSD
+from src.multigait import KheirkhahanGSD
 
 gsd = KheirkhahanGSD(version="improved_lowback").detect(imu_data)
 
@@ -49,7 +51,7 @@ first_gait_sequence_data = imu_data.iloc[
 # Step 2: Initial Contact Detection
 # ---------------------------------
 
-from multigait.ICD.ICD2 import McCamleyIC
+from src.multigait.ICD.ICD2 import McCamleyIC
 
 icd = McCamleyIC(version="improved_lowback").detect(
     first_gait_sequence_data, sampling_rate_hz=100
@@ -61,7 +63,7 @@ ic_list
 # %%
 # Step 3: Cadence Calculation
 # ---------------------------
-from multigait.CAD.cad import Cadence
+from src.multigait.CAD.cad import Cadence
 
 cad = Cadence()
 cad.calculate(
@@ -76,7 +78,7 @@ cad_per_sec
 # %%
 # Step 4: Stride Length Calculation
 # ---------------------------------
-from multigait.SL.SL1 import WeinbergSL
+from src.multigait import WeinbergSL
 
 sl = WeinbergSL(version="wrist").calculate(
     data=first_gait_sequence_data, initial_contacts=ic_list, sampling_rate_hz=100
@@ -89,7 +91,7 @@ sl_per_sec
 # Step 5: Walking Speed Calculation
 # ---------------------------------
 
-from multigait.WS.walking_speed import Ws
+from src.multigait import Ws
 
 ws = Ws().calculate(cadence_per_sec=cad_per_sec, stride_length_per_sec=sl_per_sec)
 
@@ -105,11 +107,11 @@ ws_per_sec
 # Actual Pipeline
 # ---------------
 # We first define all the algorithms we want to use.
-from multigait.CAD.cad import Cadence
-from multigait.GSD.GSD3 import KheirkhahanGSD
-from multigait.ICD.ICD2 import McCamleyIC
-from multigait.SL.SL1 import WeinbergSL
-from multigait.WS.walking_speed import Ws
+from src.multigait.CAD.cad import Cadence
+from src.multigait import KheirkhahanGSD
+from src.multigait.ICD.ICD2 import McCamleyIC
+from src.multigait import WeinbergSL
+from src.multigait import Ws
 
 gsd = KheirkhahanGSD(version="improved_lowback")
 icd = McCamleyIC(version="improved_lowback")
@@ -131,7 +133,7 @@ gait_sequences = gsd.gs_list_
 # check out the example about the :ref:`Gait Sequence Iterator <gs_iterator_example>`.
 # Note, that we use the special ``r`` object to store the results of each step and the ``subregion`` method to
 # elegantly handle the refined gait sequence.
-from multigait.pipeline.iterator import GsIterator
+from src.multigait.pipeline.iterator import GsIterator
 
 gs_iterator = GsIterator()
 
@@ -188,7 +190,7 @@ combined_results
 # As walking bouts are defined based on strides, we need to turn the ICs into strides and
 # the per-second values into per-stride values by using interpolation.
 # We also calculate the stride duration here.
-from multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_lrc
+from src.multigait import strides_list_from_ic_list_no_lrc
 
 stride_list = (
     results.ic_list.groupby("gs_id", group_keys=False)
@@ -204,7 +206,7 @@ stride_list
 #
 # For now, we are using linear interpolation to map the per-second cadence values to per-stride values and derive
 # approximated stride parameters.
-from multigait.pipeline.utils._operations import create_multi_groupby
+from src.multigait.pipeline.utils._operations import create_multi_groupby
 
 stride_list_with_approx_paras = create_multi_groupby(
     stride_list,
@@ -219,8 +221,8 @@ stride_list_with_approx_paras
 # Now the final strides are regrouped into walking bouts.
 # For this we ignore which gait sequence the strides belong to, hence we remove the ``gs_id`` from the index, but keep
 # it around as column for debugging.
-from multigait.pipeline.utils._stride_filtering import StrideFiltering
-from multigait.pipeline.utils._wb_assembly import WbAssembly
+from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
+from src.multigait.pipeline.utils._wb_assembly import WbAssembly
 
 flat_index = pd.Index(
     ["_".join(str(e) for e in s_id) for s_id in stride_list_with_approx_paras.index],
@@ -249,7 +251,7 @@ final_strides = wba.annotated_stride_list_
 
 # %%
 # Here we calculate the additional DMOs for each WB
-from multigait.pipeline.utils._var_dmos import within_wb_var
+from src.multigait.pipeline.utils._var_dmos import within_wb_var
 
 var_dmos = within_wb_var(final_strides)
 
@@ -281,12 +283,12 @@ per_wb_params.drop(columns="rule_obj").T
 
 # %%
 # Adding alpha calculation
-from multigait.pipeline.utils.alpha import compute_alpha_mle
+from src.multigait.pipeline.utils.alpha import compute_alpha_mle
 
 per_wb_params = compute_alpha_mle(per_wb_params)
 
 # %%
-from multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
+from src.multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
 
 # load single min/max thresholds from:
 thresholds = get_thresholds()
@@ -310,7 +312,7 @@ per_wb_params_mask.T
 # We add information on participant_id and measurement_date so we can use the GenericAggregator
 #
 # Here, we perform it per recording and calculate a single values from all the WBs.
-from multigait.aggregation._generic_aggregator import GenericAggregator
+from src.multigait.aggregation._generic_aggregator import GenericAggregator
 
 agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 agg_results = agg.aggregate(
@@ -324,7 +326,7 @@ print(agg_results.columns)
 # %%
 # Laboratory Aggregation example
 # In this aggregation we only take into account all WBs together, without separating them into days or WB durations.
-from multigait.aggregation._lab_aggregator import LaboratoryAggregator
+from src.multigait.aggregation._lab_aggregator import LaboratoryAggregator
 
 agg = LaboratoryAggregator(**LaboratoryAggregator.PredefinedParameters.single_recording)
 agg_results = agg.aggregate(

@@ -1,5 +1,5 @@
-from multigait.SL.SL1 import WeinbergSL
-from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
+from src.multigait import WeinbergSL
+from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """
 This is an example on how to use the intensity based Weinberg stride length algorithm.

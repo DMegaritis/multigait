@@ -1,5 +1,5 @@
-from multigait.utils.data_loader import load_imu_data_wrist
-from multigait.GSD.GSD2 import HickeyGSD
+from src.multigait import load_imu_data_wrist
+from src.multigait import HickeyGSD
 
 """
 This is an example on how to use the Hickey algo to detect gait events.

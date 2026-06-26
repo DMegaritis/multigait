@@ -65,7 +65,7 @@ The package is designed to be used in two main modes:
 High-level pipelines allow loading raw IMU data and obtaining gait outcomes end-to-end. Example:
 
 ```python
-from multigait.pipeline.multigait_pipeline import MultiGaitPipelineSuggested
+from src.multigait.pipeline import MultiGaitPipelineSuggested
 
 pipeline = MultiGaitPipelineSuggested()
 pipeline.safe_run(long_trial)

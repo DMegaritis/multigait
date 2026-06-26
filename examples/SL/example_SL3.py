@@ -1,5 +1,5 @@
-from multigait.SL.SL3 import BylemansSL
-from multigait.utils.data_loader import load_imu_data_wrist, load_ICs_wrist
+from src.multigait import BylemansSL
+from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """
 This is an example on how to use the intensity based Bylemans stride length algorithm.

@@ -1,5 +1,5 @@
-from multigait.utils.data_loader import load_imu_data_wrist
-from multigait.GSD.GSD1 import IonescuGSD
+from src.multigait import load_imu_data_wrist
+from src.multigait import IonescuGSD
 
 """
 This is an example on how to use the Ionescu algo to detect gait events from wrist data.

@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from pandas._testing import assert_frame_equal
 
-from multigait.aggregation._generic_aggregator import GenericAggregator
+from src.multigait.aggregation._generic_aggregator import GenericAggregator
 
 
 @pytest.fixture

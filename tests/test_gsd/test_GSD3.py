@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import pytest
-from multigait.GSD.GSD3 import KheirkhahanGSD
-from multigait.utils.data_loader import load_imu_data_wrist
+from src.multigait import KheirkhahanGSD
+from src.multigait import load_imu_data_wrist
 
 
 class TestKheirkhahanGSD:

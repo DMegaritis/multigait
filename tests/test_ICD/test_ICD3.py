@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from multigait.ICD.ICD3 import PhamIC
+from src.multigait import PhamIC
 
 
 class TestPhamIC:

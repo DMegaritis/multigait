@@ -1,4 +1,4 @@
-from src.multigait.ICD.ICD1 import MicoAmigoIC
+from multigait.ICD import MicoAmigoIC
 from src.multigait import load_imu_data_wrist
 
 """

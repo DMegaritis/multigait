@@ -1,4 +1,4 @@
-from src.multigait import WeinbergSL
+from multigait.SL import WeinbergSL
 from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """

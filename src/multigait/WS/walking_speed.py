@@ -2,7 +2,7 @@ from typing import Optional
 import warnings
 import pandas as pd
 from typing_extensions import Self
-from src.multigait.WS.base_ws import BaseWsDetector
+from multigait.WS import BaseWsDetector
 
 
 class Ws(BaseWsDetector):

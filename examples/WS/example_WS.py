@@ -1,7 +1,7 @@
 # %%
 # Firstly we calculate cadence from ICs
 
-from src.multigait.CAD.cad import Cadence
+from multigait.CAD.cad import Cadence
 from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 imu_data = load_imu_data_wrist()
@@ -23,7 +23,7 @@ print(cad_from_ic.cadence_per_sec_)
 
 # %%
 # Then we calculate stride length
-from src.multigait import WeinbergSL
+from multigait.SL import WeinbergSL
 
 # calling the stride length algorithm
 sl = WeinbergSL(version="wrist").calculate(
@@ -34,7 +34,7 @@ print(sl.stride_length_per_sec_)
 
 # %%
 # Now we caclulate the WS
-from src.multigait import Ws
+from multigait.WS import Ws
 
 ws = Ws().calculate(
     cadence_per_sec=cad_from_ic.cadence_per_sec_,

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from src.multigait import HickeyGSD  # Adjust import path
+from multigait.GSD import HickeyGSD  # Adjust import path
 from src.multigait import load_imu_data_wrist
 
 

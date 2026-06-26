@@ -19,12 +19,12 @@ if not is_complete:
 from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
 from src.multigait.pipeline.utils._wb_assembly import WbAssembly
 from src.multigait.pipeline.utils._thresholds import get_thresholds
-from src.multigait.aggregation._generic_aggregator import GenericAggregator
-from src.multigait import Ws
-from src.multigait import WeinbergSL
-from src.multigait.CAD.cad import Cadence
-from src.multigait.ICD.ICD2 import McCamleyIC
-from src.multigait import KheirkhahanGSD
+from multigait.aggregation import GenericAggregator
+from multigait.WS import Ws
+from multigait.SL import WeinbergSL
+from multigait.CAD.cad import Cadence
+from multigait.ICD import McCamleyIC
+from multigait.GSD import KheirkhahanGSD
 
 gsd = KheirkhahanGSD(version="wrist")
 icd = McCamleyIC()
@@ -36,7 +36,7 @@ wba = WbAssembly()
 thresholds = get_thresholds()
 agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 
-from src.multigait.pipeline.multimobility_pipeline import MultiGaitPipeline
+from multigait.pipeline import MultiGaitPipeline
 
 pipeline = MultiGaitPipeline(
     gait_sequence_detection=gsd,

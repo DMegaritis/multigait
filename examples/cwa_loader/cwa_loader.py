@@ -1,6 +1,6 @@
 # Need to manually install cwa_reader_rs as it is not included in pyproject.toml
 
-from src.multigait.data_loader.cwa_data_loader import CWADataset
+from multigait.data_loader import CWADataset
 
 # Loading all data
 dataset = CWADataset("/Users/klch3/Documents/multimobility/free_living")

@@ -1,4 +1,4 @@
-from src.multigait.SL.SL2 import KimSL
+from multigait.SL import KimSL
 from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """

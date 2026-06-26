@@ -1,4 +1,4 @@
-from src.multigait.CAD.cad import Cadence, CadenceSimple
+from multigait.CAD.cad import Cadence, CadenceSimple
 from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 

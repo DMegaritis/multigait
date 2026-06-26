@@ -1,5 +1,5 @@
 from src.multigait import load_imu_data_lowback
-from src.multigait import KheirkhahanGSD
+from multigait.GSD import KheirkhahanGSD
 
 """
 This is an example on how to use the Kheirkhahan algo to detect gait events.

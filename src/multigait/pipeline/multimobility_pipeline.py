@@ -7,30 +7,30 @@ from typing_extensions import Self
 
 
 # Multimobility imports
-from src.multigait.CAD.cad import Cadence
+from multigait.CAD.cad import Cadence
 from src.multigait.CAD.base_cad import BaseCadDetector
 from src.multigait.GSD.GSD3 import KheirkhahanGSD
 from src.multigait.GSD.GSD1 import IonescuGSD
 from src.multigait.GSD.base_gsd import BaseGsdDetector
-from src.multigait.ICD.ICD4 import ZijlstraIC
+from multigait.ICD import PhamIC
 from src.multigait.ICD.ICD6 import GuIC
-from src.multigait.ICD.ICD2 import McCamleyIC
+from multigait.ICD import McCamleyIC
 from src.multigait.ICD.base_ic import BaseIcDetector
 from src.multigait.SL.SL1 import WeinbergSL
 from src.multigait.SL.base_sl import BaseSlDetector
 from src.multigait.WS.walking_speed import Ws
-from src.multigait.WS.base_ws import BaseWsDetector
+from multigait.WS import BaseWsDetector
 
 # Multimobility function imports
 from src.multigait.pipeline.utils.ic_to_stride import strides_list_from_ic_list_no_lrc
 from src.multigait.pipeline.utils._wb_assembly import WbAssembly
 from src.multigait.pipeline.utils._thresholds import get_thresholds, apply_thresholds
-from src.multigait.aggregation._generic_aggregator import GenericAggregator
+from multigait.aggregation import GenericAggregator
 from src.multigait.pipeline.utils._stride_filtering import StrideFiltering
 from src.multigait.pipeline.iterator import GsIterator, FullPipelinePerGsResult
 from src.multigait.pipeline.utils._operations import create_multi_groupby
 from src.multigait.utils.interp import map_seconds_to_regions
-from src.multigait.aggregation._aggregator_base import AggregatorBase
+from multigait.aggregation import AggregatorBase
 from src.multigait.pipeline.pipeline_base import PipelineBase
 from src.multigait.pipeline.pipeline_base import GaitDatasetT
 from src.multigait.utils.data_conversions import rename_axes_to_body

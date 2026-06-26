@@ -31,7 +31,7 @@ if not is_complete:
 # %%
 # Step 1: GSD
 # -------------------------------
-from src.multigait import KheirkhahanGSD
+from multigait.GSD import KheirkhahanGSD
 
 gsd = KheirkhahanGSD(version="improved_lowback").detect(imu_data)
 
@@ -51,7 +51,7 @@ first_gait_sequence_data = imu_data.iloc[
 # Step 2: Initial Contact Detection
 # ---------------------------------
 
-from src.multigait.ICD.ICD2 import McCamleyIC
+from multigait.ICD import McCamleyIC
 
 icd = McCamleyIC(version="improved_lowback").detect(
     first_gait_sequence_data, sampling_rate_hz=100
@@ -63,7 +63,7 @@ ic_list
 # %%
 # Step 3: Cadence Calculation
 # ---------------------------
-from src.multigait.CAD.cad import Cadence
+from multigait.CAD.cad import Cadence
 
 cad = Cadence()
 cad.calculate(
@@ -78,7 +78,7 @@ cad_per_sec
 # %%
 # Step 4: Stride Length Calculation
 # ---------------------------------
-from src.multigait import WeinbergSL
+from multigait.SL import WeinbergSL
 
 sl = WeinbergSL(version="wrist").calculate(
     data=first_gait_sequence_data, initial_contacts=ic_list, sampling_rate_hz=100
@@ -91,7 +91,7 @@ sl_per_sec
 # Step 5: Walking Speed Calculation
 # ---------------------------------
 
-from src.multigait import Ws
+from multigait.WS import Ws
 
 ws = Ws().calculate(cadence_per_sec=cad_per_sec, stride_length_per_sec=sl_per_sec)
 
@@ -107,11 +107,11 @@ ws_per_sec
 # Actual Pipeline
 # ---------------
 # We first define all the algorithms we want to use.
-from src.multigait.CAD.cad import Cadence
-from src.multigait import KheirkhahanGSD
-from src.multigait.ICD.ICD2 import McCamleyIC
-from src.multigait import WeinbergSL
-from src.multigait import Ws
+from multigait.CAD.cad import Cadence
+from multigait.GSD import KheirkhahanGSD
+from multigait.ICD import McCamleyIC
+from multigait.SL import WeinbergSL
+from multigait.WS import Ws
 
 gsd = KheirkhahanGSD(version="improved_lowback")
 icd = McCamleyIC(version="improved_lowback")
@@ -312,7 +312,7 @@ per_wb_params_mask.T
 # We add information on participant_id and measurement_date so we can use the GenericAggregator
 #
 # Here, we perform it per recording and calculate a single values from all the WBs.
-from src.multigait.aggregation._generic_aggregator import GenericAggregator
+from multigait.aggregation import GenericAggregator
 
 agg = GenericAggregator(**GenericAggregator.PredefinedParameters.single_day)
 agg_results = agg.aggregate(
@@ -326,7 +326,7 @@ print(agg_results.columns)
 # %%
 # Laboratory Aggregation example
 # In this aggregation we only take into account all WBs together, without separating them into days or WB durations.
-from src.multigait.aggregation._lab_aggregator import LaboratoryAggregator
+from multigait.aggregation import LaboratoryAggregator
 
 agg = LaboratoryAggregator(**LaboratoryAggregator.PredefinedParameters.single_recording)
 agg_results = agg.aggregate(

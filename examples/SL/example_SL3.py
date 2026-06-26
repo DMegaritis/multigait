@@ -1,4 +1,4 @@
-from src.multigait import BylemansSL
+from multigait.SL import BylemansSL
 from src.multigait import load_imu_data_wrist, load_ICs_wrist
 
 """

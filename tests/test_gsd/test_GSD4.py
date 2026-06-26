@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from src.multigait import MacLeanGSD
+from multigait.GSD import MacLeanGSD
 from src.multigait import load_imu_data_wrist
 
 

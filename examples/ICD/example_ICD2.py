@@ -1,4 +1,4 @@
-from src.multigait.ICD.ICD2 import McCamleyIC
+from multigait.ICD import McCamleyIC
 from src.multigait import load_imu_data_lowback
 
 """

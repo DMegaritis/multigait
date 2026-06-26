@@ -3,7 +3,7 @@
 from typing import Generic, Optional, TypeVar
 import pandas as pd
 from tpcp import Pipeline
-from src.multigait.data.base_data import BaseGaitDataset
+from multigait.data import BaseGaitDataset
 
 GaitDatasetT = TypeVar("GaitDatasetT", bound=BaseGaitDataset)
 

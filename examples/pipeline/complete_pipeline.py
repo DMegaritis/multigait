@@ -69,9 +69,9 @@ pipeline.aggregated_parameters_
 # Running the preliminary suggested pipeline separately.
 # For this, we do not need to specify the algorithms to be used.
 
-from multigait.pipeline.multimobility_pipeline import MultiGaitPipelineHealthyCoMorbidity
+from multigait.pipeline.multimobility_pipeline import MultiGaitPipelineMultimorbidityImpaired
 
-pipeline = MultiGaitPipelineHealthyCoMorbidity(
+pipeline = MultiGaitPipelineMultimorbidityImpaired(
 )
 
 pipeline.safe_run(data)

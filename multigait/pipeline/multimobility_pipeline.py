@@ -11,7 +11,10 @@ from typing_extensions import Self
 from multigait.CAD.cad import Cadence
 from multigait.CAD.base_cad import BaseCadDetector
 from multigait.GSD.GSD3 import KheirkhahanGSD
+from multigait.GSD.GSD1 import IonescuGSD
 from multigait.GSD.base_gsd import BaseGsdDetector
+from multigait.ICD.ICD4 import ZijlstraIC
+from multigait.ICD.ICD6 import GuIC
 from multigait.ICD.ICD2 import McCamleyIC
 from multigait.ICD.base_ic import BaseIcDetector
 from multigait.SL.SL1 import WeinbergSL
@@ -191,6 +194,21 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 "gait_sequence_detection": KheirkhahanGSD(),
                 "initial_contact_detection": McCamleyIC(),
                 "initial_contact_detection_sl": McCamleyIC(),
+                "cadence_calculation": Cadence(),
+                "stride_length_calculation": WeinbergSL(),
+                "walking_speed_calculation": Ws(),
+                "stride_selection": StrideFiltering(),
+                "wba": WbAssembly(),
+                "dmo_thresholds": get_thresholds(),
+                "dmo_aggregation": GenericAggregator(**GenericAggregator.PredefinedParameters.single_day),
+            }
+        )
+
+        impaired_multimorbid: Final = MappingProxyType(
+            {
+                "gait_sequence_detection": IonescuGSD(),
+                "initial_contact_detection": ZijlstraIC(),
+                "initial_contact_detection_sl": GuIC(),
                 "cadence_calculation": Cadence(),
                 "stride_length_calculation": WeinbergSL(),
                 "walking_speed_calculation": Ws(),
@@ -537,6 +555,49 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 .mean(),
             ],
             axis=1,
+        )
+
+
+class MultiGaitPipelineMultimorbidityImpaired(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):
+    """This pipeline is constructed with a predefined set of algorithms which exhibited the best performance in impaired multimorbid cohorts tested in [2].
+
+    This subclass wraps MultiGaitPipeline and provides a set of predefined algorithm instances
+    (see PredefinedParameters.impaired_multimorbid) that reflect the configuration
+    reported in [2].
+
+    The constructor accepts the same parameters as MultiGaitPipeline, but default values
+    are applied via the set_defaults decorator so users can instantiate it without specifying
+    every argument.
+
+    .. [2] Under review.
+    """
+
+    @set_defaults(**{k: cf(v) for k, v in MultiGaitPipeline.PredefinedParameters.impaired_multimorbid.items()})
+    def __init__(
+        self,
+        *,
+        gait_sequence_detection: BaseGsdDetector,
+        initial_contact_detection: BaseIcDetector,
+        initial_contact_detection_sl: BaseIcDetector,
+        cadence_calculation: Optional[BaseCadDetector],
+        stride_length_calculation: Optional[BaseSlDetector],
+        walking_speed_calculation: Optional[BaseWsDetector],
+        stride_selection: StrideFiltering,
+        wba: WbAssembly,
+        dmo_thresholds: Optional[pd.DataFrame],
+        dmo_aggregation: AggregatorBase,
+    ) -> None:
+        super().__init__(
+            gait_sequence_detection=gait_sequence_detection,
+            initial_contact_detection=initial_contact_detection,
+            initial_contact_detection_sl=initial_contact_detection_sl,
+            cadence_calculation=cadence_calculation,
+            stride_length_calculation=stride_length_calculation,
+            walking_speed_calculation=walking_speed_calculation,
+            stride_selection=stride_selection,
+            wba=wba,
+            dmo_thresholds=dmo_thresholds,
+            dmo_aggregation=dmo_aggregation,
         )
 
 class MultiGaitPipelineHealthyCoMorbidity(MultiGaitPipeline[GaitDatasetT], Generic[GaitDatasetT]):

@@ -474,6 +474,10 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             icd = self.initial_contact_detection.clone().detect(gs_data)
             r.ic_list = icd.ic_list_
 
+            if len(icd.ic_list_) < 2:
+                # If less than 2 ICs are detected, a WB is not valid, hence we remove it
+                continue
+
             # Only run a second detection if a separate SL detector was provided,
             # otherwise reuse the result from the primary ICD at no extra cost
             if use_separate_icd_sl:

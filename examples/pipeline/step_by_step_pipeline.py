@@ -141,6 +141,11 @@ for (_, gs_data), r in gs_iterator.iterate(imu_data, gait_sequences):
     icd = icd.clone().detect(gs_data, sampling_rate_hz=sampling_rate_hz)
     r.ic_list = icd.ic_list_
 
+    if len(icd.ic_list_) < 2:
+        # If less than 2 ICs are detected, a WB is not valid, hence we remove it
+        print(f"Skipping a gait sequence with fewer than 2 initial contacts detected.")
+        continue
+
     # cadence
     cad = cad.clone().calculate(
         gs_data,

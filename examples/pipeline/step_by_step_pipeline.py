@@ -143,7 +143,7 @@ for (_, gs_data), r in gs_iterator.iterate(imu_data, gait_sequences):
 
     if len(icd.ic_list_) < 2:
         # If less than 2 ICs are detected, a WB is not valid, hence we remove it
-        print(f"Skipping a gait sequence with fewer than 2 initial contacts detected.")
+        print("Skipping a gait sequence with fewer than 2 initial contacts detected.")
         continue
 
     # cadence

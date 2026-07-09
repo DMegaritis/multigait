@@ -418,6 +418,11 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 height_m=height_m,
             )
 
+            # 'alpha' is not in this mask yet, we add back so it isn't nulled during aggregation
+            self.per_wb_parameter_mask_ = self.per_wb_parameter_mask_.reindex(
+                columns=per_wb_with_alpha.columns, fill_value=True
+            )
+
         if self.dmo_aggregation is None:
             self.aggregated_parameters_ = None
             return self

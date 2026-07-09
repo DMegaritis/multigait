@@ -170,6 +170,6 @@ This work was supported by the Medical Research Council (MRC) Gap Fund award (UK
 The MultiGait library is licensed under the Apache License 2.0. It is free to use for any purpose, including commercial use, but all distributions must include the license text.
 
 
-<img width="200" height="200" alt="Northumbria_University_Logo" src="https://github.com/user-attachments/assets/4572c9f6-ad7e-4d8b-a398-5bae0547666f" />
-<img width="200" height="200" alt="Medical_Research_Council_logo svg" src="https://github.com/user-attachments/assets/bba73ebd-3e0b-4831-b8c0-e5215c0fe14a" />
-<img width="200" height="200" alt="newcastle-university-logo-png_seeklogo-355206" src="https://github.com/user-attachments/assets/e7a05ab0-6458-4c86-b5d0-723b76f8ac66" />
+<img width="500" height="180" alt="Northumbria_University_Logo" src="https://github.com/user-attachments/assets/4572c9f6-ad7e-4d8b-a398-5bae0547666f" />
+<img width="400" height="180" alt="Medical_Research_Council_logo svg" src="https://github.com/user-attachments/assets/bba73ebd-3e0b-4831-b8c0-e5215c0fe14a" />
+<img width="400" height="180" alt="newcastle-university-logo-png_seeklogo-355206" src="https://github.com/user-attachments/assets/e7a05ab0-6458-4c86-b5d0-723b76f8ac66" />

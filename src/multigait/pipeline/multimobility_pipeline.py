@@ -10,7 +10,7 @@ from typing_extensions import Self
 from multigait.CAD.cad import Cadence
 from multigait.CAD.base_cad import BaseCadDetector
 from multigait.GSD import KheirkhahanGSD, IonescuGSD, BaseGsdDetector
-from multigait.ICD import McCamleyIC, ZijlstraIC, GuIC, BaseIcDetector
+from multigait.ICD import McCamleyIC, ZijlstraIC, BaseIcDetector, PhamIC
 from multigait.SL import WeinbergSL
 from multigait.SL.base_sl import BaseSlDetector
 from multigait.WS import Ws
@@ -218,7 +218,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
             {
                 "gait_sequence_detection": IonescuGSD(),
                 "initial_contact_detection": ZijlstraIC(),
-                "initial_contact_detection_sl": GuIC(),
+                "initial_contact_detection_sl": PhamIC(),
                 "cadence_calculation": Cadence(),
                 "stride_length_calculation": WeinbergSL(),
                 "walking_speed_calculation": Ws(),

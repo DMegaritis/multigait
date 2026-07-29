@@ -71,7 +71,19 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
       are passed to the constructor; no specific implementations are required at class definition.
     - All major pipeline results are stored as attributes after `run()` execution.
     - If ``initial_contact_detection_sl`` is not provided, the primary ``initial_contact_detection``
-      is used for stride length calculation as well, with no redundant detection calls.
+      is used for stride length calculation as well, with a single, non-redundant detection call,
+      and that same stride length result is both reported as the SL output and passed to
+      ``walking_speed_calculation``.
+    - If ``initial_contact_detection_sl`` IS provided (i.e., a different IC detector is used
+      specifically for stride length), ``stride_length_calculation`` is run TWICE per gait
+      sequence:
+        1. once using the primary ``initial_contact_detection`` contacts — this result feeds
+           ``walking_speed_calculation``, so that cadence and stride length within the walking
+           speed computation are always derived from the same, primary IC detector; and
+        2. once using ``initial_contact_detection_sl`` contacts — this result is the one
+           reported as the pipeline's stride length output (``per_wb_parameters_`` /
+           ``raw_per_stride_parameters_``), reflecting the different IC detector
+           chosen only for standalone stride length accuracy.
 
     Parameters
     ----------
@@ -79,10 +91,16 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
         Algorithm instance for gait sequence detection.
     initial_contact_detection : BaseIcDetector
         Algorithm instance for initial contact detection (used for cadence, walking speed,
-        stride assembly, and stride length if ``initial_contact_detection_sl`` is not provided).
+        and stride assembly; also used for stride length if ``initial_contact_detection_sl``
+        is not provided).
     initial_contact_detection_sl : Optional[BaseIcDetector], default=None
-        Algorithm instance for initial contact detection used exclusively by the stride length
-        calculation. If None, falls back to ``initial_contact_detection`` with no extra computation.
+        Algorithm instance for initial contact detection used exclusively for the reported
+        stride length output. If provided, ``stride_length_calculation`` is additionally run
+        once using ``initial_contact_detection`` contacts so that walking speed is always
+        computed from the primary IC detector's stride length, not from
+        ``initial_contact_detection_sl``'s. If None, falls back to ``initial_contact_detection``
+        with no extra computation, and the single stride length result is used both as the
+        reported SL output and as the walking-speed input.
     cadence_calculation : Optional[BaseCadDetector], default=None
         Algorithm instance for cadence calculation (per-second).
     stride_length_calculation : Optional[BaseSlDetector], default=None
@@ -106,7 +124,8 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     Attributes
     ----------
     per_stride_parameters_ : pd.DataFrame
-        Final per-stride parameters after stride selection and WBA.
+        Final per-stride parameters after stride selection and WBA. Stride length values here
+        reflect ``initial_contact_detection_sl`` when provided (see class Notes).
     per_wb_parameters_ : pd.DataFrame
         Aggregated parameters per walking bout.
     aggregated_parameters_ : pd.DataFrame
@@ -126,13 +145,13 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
     per_wb_parameter_mask_ : pd.Series
         Boolean mask indicating valid strides per walking bout.
     raw_ic_list_ : pd.DataFrame
-        Raw initial contact events detected from IMU data.
+        Raw initial contact events detected from IMU data (from ``initial_contact_detection``).
     raw_per_stride_parameters_ : pd.DataFrame
         Raw stride-wise parameters before filtering and stride selection.
     raw_per_sec_parameters_ : pd.DataFrame
-        Raw per-second gait parameters.
-    var_dmos : pd.DataFrame
-        Within-WB variability DMOs computed from per-stride parameters.
+        Raw per-second gait parameters. The ``stride_length_per_sec`` column reflects
+        ``initial_contact_detection_sl`` when provided (see class Notes); walking speed is
+        computed internally from the primary IC detector's stride length regardless.
 
     Examples
     --------
@@ -450,8 +469,20 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
           - runs cadence, stride length and walking speed calculators if provided,
           - populates fields on the per-GS result object (r) that are later concatenated.
 
-        If ``initial_contact_detection_sl`` is None, the IC list from the primary detector
-        is reused for stride length with no redundant detection call.
+        Stride length handling
+        -----------------------
+        - If ``initial_contact_detection_sl`` is None, ``stride_length_calculation`` is called
+          ONCE, using the primary IC detector's contacts. That single result is both the
+          reported stride length output (``r.stride_length_per_sec``) and the stride length
+          fed into ``walking_speed_calculation`` — no redundant call is made.
+        - If ``initial_contact_detection_sl`` is provided (a different IC detector for SL),
+          ``stride_length_calculation`` is called TWICE:
+            1. using the primary IC detector's contacts (``icd.ic_list_``) — this result is
+               NOT reported for SL, it is only used to feed ``walking_speed_calculation``, so that
+               cadence and stride length inside the WS computation always come from the same,
+               primary IC detector; and
+            2. using ``initial_contact_detection_sl``'s contacts (``icd_sl_contacts``) — this
+               result IS reported as ``r.stride_length_per_sec`` as the pipeline's stride length output.
 
         Parameters
         ----------
@@ -496,20 +527,45 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 cad_r = cad.cadence_per_sec_
                 r.cadence_per_sec = cad_r
 
-            sl_r = None
+            # sl_for_ws_r: stride length used ONLY as walking-speed input, always derived from
+            # the main initial_contact_detection.
+            # sl_report_r: stride length REPORTED as the pipeline's SL output; derived from
+            # initial_contact_detection_sl when provided, otherwise identical to sl_for_ws_r.
+            sl_for_ws_r = None
+            sl_report_r = None
             if self.stride_length_calculation:
-                sl = self.stride_length_calculation.clone().calculate(
-                    gs_data, initial_contacts=icd_sl_contacts, **self._all_action_kwargs
-                )
-                sl_r = sl.stride_length_per_sec_
-                r.stride_length_per_sec = sl.stride_length_per_sec_
+                if use_separate_icd_sl:
+                    sl_for_ws = self.stride_length_calculation.clone().calculate(
+                        gs_data,
+                        initial_contacts=icd.ic_list_,
+                        **self._all_action_kwargs,
+                    )
+                    sl_for_ws_r = sl_for_ws.stride_length_per_sec_
+
+                    sl_report = self.stride_length_calculation.clone().calculate(
+                        gs_data,
+                        initial_contacts=icd_sl_contacts,
+                        **self._all_action_kwargs,
+                    )
+                    sl_report_r = sl_report.stride_length_per_sec_
+                else:
+                    # No separate SL-specific IC detector: a single calculation covers both
+                    sl = self.stride_length_calculation.clone().calculate(
+                        gs_data,
+                        initial_contacts=icd_sl_contacts,
+                        **self._all_action_kwargs,
+                    )
+                    sl_for_ws_r = sl.stride_length_per_sec_
+                    sl_report_r = sl_for_ws_r
+
+                r.stride_length_per_sec = sl_report_r
 
             if self.walking_speed_calculation:
                 ws = self.walking_speed_calculation.clone().calculate(
                     gs_data,
                     initial_contacts=icd.ic_list_,
                     cadence_per_sec=cad_r,
-                    stride_length_per_sec=sl_r,
+                    stride_length_per_sec=sl_for_ws_r,
                 )
                 r.walking_speed_per_sec = ws.walking_speed_per_sec_
 
@@ -625,6 +681,11 @@ class MultiGaitPipelineMultimorbidityImpaired(
     The constructor accepts the same parameters as MultiGaitPipeline, but default values
     are applied via the set_defaults decorator so users can instantiate it without specifying
     every argument.
+
+    With this configuration (``initial_contact_detection=ZijlstraIC()``,
+    ``initial_contact_detection_sl=PhamIC()``), walking speed is computed from Zijlstra-derived
+    cadence and Zijlstra-derived stride length, while the pipeline's reported stride length
+    output uses Pham-derived contacts.
 
     .. [2] Under review.
     """

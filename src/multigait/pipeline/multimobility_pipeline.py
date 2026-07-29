@@ -239,7 +239,7 @@ class MultiGaitPipeline(PipelineBase[GaitDatasetT], Generic[GaitDatasetT]):
                 "initial_contact_detection": ZijlstraIC(),
                 "initial_contact_detection_sl": PhamIC(),
                 "cadence_calculation": Cadence(),
-                "stride_length_calculation": WeinbergSL(),
+                "stride_length_calculation": WeinbergSL(version="wrist_adaptive"),
                 "walking_speed_calculation": Ws(),
                 "stride_selection": StrideFiltering(),
                 "wba": WbAssembly(),

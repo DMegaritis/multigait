@@ -1,4 +1,4 @@
-~~# MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices
+# MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices
 
 [![PyPI version](https://img.shields.io/pypi/v/multigait.svg)](https://pypi.org/project/multigait/)
 

@@ -1,4 +1,4 @@
-# MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices
+~~# MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices
 
 [![PyPI version](https://img.shields.io/pypi/v/multigait.svg)](https://pypi.org/project/multigait/)
 
@@ -6,10 +6,10 @@
 
 MultiGait (Multimorbidity Gait) is a Python implementation of a gait analysis pipeline for real-world assessment, primarily developed for wrist-worn inertial measurement units (IMUs). This pipeline integrates signal-processing algorithms for gait detection, initial contact detection, stride-length estimation, cadence, and walking speed providing a streamlined workflow for mobility research in people with multiple long-term conditions (multimorbidity). While the pipeline is wrist-focused, fine-tuned versions for lower-back devices are also provided for use in custom workflows.
 
-The individual algorithms included in this library have been developed and validated in multimorbidity cohorts [1]. However, the full integration of these algorithms into a complete pipeline has not yet been formally evaluated, so we do not currently recommend any specific pipeline configuration. In future releases, we plan to systematically assess combinations of algorithms and provide recommended pipelines tailored to different multimorbidity clusters.
+The individual algorithms included in this library have been developed and validated in multimorbidity cohorts [1]. 
+Validation of the full wrist-worn device pipeline is provided in [2], which presents the recommended pipeline configuration and reports the associated errors and performance metrics.
 
 Planned future releases include:
-- Fully validated pipelines for different multimorbidity clusters.
 - Novel algorithm implementations.
 - Validated wear-time detection algorithms.
 
@@ -26,7 +26,8 @@ Table of Contents
   - [Pipeline Use](#pipeline-use)
   - [Specific Algorithms](#specific-algorithms)
 - [Citation](#citation)
-- [Validation reference for the underlying algorithms](#validation-reference-for-the-underlying-algorithms)
+- [Validation reference for the underlying algorithms](#validation-literature-for-the-underlying-wrist-worn-device-signal-processing-algorithms)
+- [Validation reference for the complete wrist-device pipeline](#validation-literature-for-the-complete-wrist-worn-device-signal-processing-pipeline)
 - [Funding and Support](#funding-and-support)
 - [License](#license)
 
@@ -70,7 +71,7 @@ pipeline = MultiGaitPipelineMultimorbidityImpaired()
 pipeline.safe_run(long_trial)
 ```
 
-Note: At this stage we offer a suggested pipeline with the best-performing algorithms from [1], but the full pipeline has not been fully validated yet. Please interpret results cautiously.
+Note: We offer the best performing pipeline for older adults with multimorbidity presented and validated in [2].
 
 Additional note: While this library has been primarily developed as a complete gait pipeline for wrist-worn devices, it also includes support for lower-back algorithms. Fine-tuned versions for lower-back devices are provided and can be used in custom pipelines.
 
@@ -153,8 +154,11 @@ If you use MultiGait in your research, please cite:
 }
 ```
 
-## Validation reference for the underlying algorithms
-[1] Megaritis, D., Alcock, L., Scott, K., Hiden, H., Cereatti, A., Vogiatzis, I., & Del Din, S. (2025). Real-World Wrist-Derived Digital Mobility Outcomes in People with Multiple Long-Term Conditions: A Comparison of Algorithms. Bioengineering, 12(10), 1108. https://doi.org/10.3390/bioengineering12101108
+## Validation literature for the underlying wrist-worn device signal-processing algorithms
+[1] Megaritis D, Alcock L, Scott K, Hiden H, Cereatti A, Vogiatzis I, Del Din S. Real-World Wrist-Derived Digital Mobility Outcomes in People with Multiple Long-Term Conditions: A Comparison of Algorithms. Bioengineering (Basel). 2025 Oct 15;12(10):1108. doi: 10.3390/bioengineering12101108. PMID: 41155107; PMCID: PMC12561645.
+
+## Validation literature for the complete wrist-worn device signal-processing pipeline
+[2] Megaritis D, Alcock L, Scott K, Hiden H, Vogiatzis I, Del Din S. Validation of an Algorithmic Pipeline for Wrist-Worn Devices to Estimate Walking Speed in People with Multiple Long-Term Conditions. Sensors (Basel). 2026 Aug 5;26(15):4946. doi: 10.3390/s26154946. PMID: 42590721; PMCID: PMC13468760.
 
 ---
 
@@ -171,4 +175,4 @@ The MultiGait library is licensed under the Apache License 2.0. It is free to us
 
 <img width="500" height="180" alt="Northumbria_University_Logo" src="https://github.com/user-attachments/assets/4572c9f6-ad7e-4d8b-a398-5bae0547666f" />
 <img width="400" height="180" alt="Medical_Research_Council_logo svg" src="https://github.com/user-attachments/assets/bba73ebd-3e0b-4831-b8c0-e5215c0fe14a" />
-<img width="400" height="180" alt="newcastle-university-logo-png_seeklogo-355206" src="https://github.com/user-attachments/assets/e7a05ab0-6458-4c86-b5d0-723b76f8ac66" />
+<img width="400" height="180" alt="newcastle-university-logo-png_seeklogo-355206" src="https://github.com/user-attachments/assets/e7a05ab0-6458-4c86-b5d0-723b76f8ac66" />~~

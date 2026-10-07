@@ -144,7 +144,7 @@ The following table summarizes all Digital Mobility Outcomes (DMOs) extracted by
 If you use MultiGait in your research, please cite:
 
 ```bibtex
-@software{megaritis2025wristmobility,
+@software{megaritis2025multigait,
   author    = {Megaritis, Dimitrios and Alcock, Lisa and Scott, Kirsty and Hiden, Hugo and Cereatti, Andrea and Vogiatzis, Ioannis and Del Din, Silvia},
   title     = {MultiGait: Real-World Gait Pipeline for Wrist-Worn Devices for Multimorbid Populations},
   year      = {2025},

@@ -98,7 +98,7 @@ class WbAssembly(Algorithm):
                 "rules": [
                     (
                         "min_strides",
-                        StridesCriteria(min_strides=5),
+                        StridesCriteria(min_strides=4),
                     ),
                     ("max_break", BreakCriteria(max_break_s=3)),
                 ]

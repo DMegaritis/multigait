@@ -173,17 +173,8 @@ class KimSL(BaseSlDetector):
 
         self.ic_list = self.initial_contacts["ic"].to_numpy()
 
-        if len(self.ic_list) > 0 and (
-            self.ic_list[0] != 0 or self.ic_list[-1] != len(self.data) - 1
-        ):
-            warnings.warn(
-                "Usually we assume that gait sequences are cut to the first and last detected initial "
-                "contact. "
-                "This is not the case for the passed initial contacts and might lead to unexpected "
-                "results in the cadence calculation. "
-                "Specifically, you will get NaN values at the start and the end of the output.",
-                stacklevel=1,
-            )
+        # In multigait gait sequences are not cut to the first and last ICs.
+        # Edge seconds without data stay NaN and are ignored downstream.
 
         # Remove duplicate values from ic_list
         self.ic_list = np.unique(self.ic_list)

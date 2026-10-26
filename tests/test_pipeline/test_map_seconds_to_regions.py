@@ -40,7 +40,9 @@ def _reference(regions, second_params):
         for j in range(values.shape[1]):
             valid = ~np.isnan(values[:, j])
             if overlap[valid].sum() > 0:
-                out[i, j] = (overlap[valid] * values[valid, j]).sum() / overlap[valid].sum()
+                out[i, j] = (overlap[valid] * values[valid, j]).sum() / overlap[
+                    valid
+                ].sum()
     return out
 
 
@@ -53,7 +55,9 @@ def _run(bounds, values, columns=("a",)):
 class TestMapSecondsToRegionsCurrentBehaviour:
     """Must pass before and after the NaN change."""
 
-    @pytest.mark.parametrize("bounds", [[[0, 100]], [[30, 170]], [[250, 730]], [[0, 1000]]])
+    @pytest.mark.parametrize(
+        "bounds", [[[0, 100]], [[30, 170]], [[250, 730]], [[0, 1000]]]
+    )
     def test_constant_signal_gives_constant_mean(self, bounds):
         result, _ = _run(bounds, np.full(N_SEC, 3.5))
         assert np.allclose(result["a"], 3.5)
@@ -75,7 +79,9 @@ class TestMapSecondsToRegionsCurrentBehaviour:
         starts = rng.integers(0, 800, size=8)
         bounds = np.column_stack([starts, starts + rng.integers(20, 200, size=8)])
         result, sec = _run(bounds, values, columns=("a", "b"))
-        assert np.allclose(result[["a", "b"]].to_numpy(), _reference(_regions(bounds), sec))
+        assert np.allclose(
+            result[["a", "b"]].to_numpy(), _reference(_regions(bounds), sec)
+        )
 
     def test_keeps_region_columns_and_index(self):
         regions = _regions([[0, 100], [100, 250]])
@@ -89,7 +95,9 @@ class TestMapSecondsToRegionsCurrentBehaviour:
 
     def test_empty_regions_adds_columns(self):
         sec = _second_params(np.ones(N_SEC))
-        result = map_seconds_to_regions(_regions(np.empty((0, 2))), sec, sampling_rate_hz=FS)
+        result = map_seconds_to_regions(
+            _regions(np.empty((0, 2))), sec, sampling_rate_hz=FS
+        )
         assert result.empty
         assert "a" in result.columns
 
@@ -135,7 +143,9 @@ class TestMapSecondsToRegionsNaNHandling:
 
     def test_region_straddling_a_nan_second_uses_valid_part_only(self):
         values = np.array([1.0, 2.0, np.nan, 4.0] + [1.0] * (N_SEC - 4))
-        result, _ = _run([[150, 350]], values)  # 50 in s1 (2.0), 100 in s2 (NaN), 50 in s3 (4.0)
+        result, _ = _run(
+            [[150, 350]], values
+        )  # 50 in s1 (2.0), 100 in s2 (NaN), 50 in s3 (4.0)
         assert np.isclose(result["a"].iloc[0], (50 * 2.0 + 50 * 4.0) / 100)
 
     def test_all_nan_gives_nan(self):
@@ -195,7 +205,9 @@ class TestMapSecondsToRegionsEdgeCases:
         assert np.isclose(result["a"].iloc[3], 2.0)
 
     def test_alternating_nan_seconds(self):
-        values = np.array([1.0, np.nan, 3.0, np.nan, 5.0, np.nan, 7.0, np.nan, 9.0, np.nan])
+        values = np.array(
+            [1.0, np.nan, 3.0, np.nan, 5.0, np.nan, 7.0, np.nan, 9.0, np.nan]
+        )
         bounds = [[0, 200], [100, 300], [200, 400], [0, 1000]]
         result, sec = _run(bounds, values)
         # a region over one valid and one NaN second equals the valid value

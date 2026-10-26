@@ -69,9 +69,7 @@ class TestStridesListFromIcListNoLrc:
     def test_empty_input(self):
         empty = pd.DataFrame(
             {"ic": pd.Series([], dtype="int64")},
-            index=pd.MultiIndex.from_arrays(
-                [[], []], names=["gs_id", "step_id"]
-            ),
+            index=pd.MultiIndex.from_arrays([[], []], names=["gs_id", "step_id"]),
         )
         result = strides_list_from_ic_list_no_lrc(empty)
         assert result.empty
@@ -105,7 +103,9 @@ class TestStridesListFromIcListNoLrc:
         assert result["start"].is_monotonic_increasing
         assert (result["end"] > result["start"]).all()
         # stride i+1 starts before stride i ends
-        assert (result["start"].iloc[1:].to_numpy() < result["end"].iloc[:-1].to_numpy()).all()
+        assert (
+            result["start"].iloc[1:].to_numpy() < result["end"].iloc[:-1].to_numpy()
+        ).all()
 
     def test_stride_duration_is_twice_step_duration(self):
         """Regression test: the old version returned step time as 'stride duration'.

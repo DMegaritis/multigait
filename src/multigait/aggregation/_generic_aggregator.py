@@ -56,7 +56,7 @@ class GenericAggregator(AggregatorBase):
     variability metrics. Each aggregated parameter follows a naming convention:
 
     - Percentile:    ``*_p90``                 (representing max)
-    - Coefficient of variation across bouts: `*_var` (computed from per-bout aggregated values)
+    - Coefficient of variation across bouts: `*_cv` (computed from per-bout aggregated values)
     - Within-bout coefficient of variation: `*_wb_cv` (computed from variability inside each individual bout)
     - Within-bout RMSSD: ``*_wb_rmssd`` (computed from variability inside each individual bout)
 
@@ -113,13 +113,13 @@ class GenericAggregator(AggregatorBase):
     ALTERNATIVE_NAMES: typing.ClassVar[dict[str, str]] = {
         "wb_all_sum": "wb_all__count",
         "walkdur_all_sum": "total_walking_duration_min",
-        "wbdur_all_median": "wb_all__duration_s__mean",
+        "wbdur_all_median": "wb_all__duration_s__median",
         "wbdur_all_p90": "wb_all__duration_s__p90",
-        "wbdur_all_var": "wb_all__duration_s__var",
+        "wbdur_all_cv": "wb_all__duration_s__cv",
         "cadence_all_avg": "wb_all__cadence_spm__avg",
         "strdur_all_avg": "wb_all__stride_duration_s__avg",
-        "cadence_all_var": "wb_all__cadence_spm__var",
-        "strdur_all_var": "wb_all__stride_duration_s__var",
+        "cadence_all_cv": "wb_all__cadence_spm__cv",
+        "strdur_all_cv": "wb_all__stride_duration_s__cv",
         "cadence_all_wb_cv": "wb_all__cadence_spm__cv__avg",
         "strdur_all_wb_cv": "wb_all__stride_duration_s__cv__avg",
         "cadence_all_wb_rmssd": "wb_all__cadence_spm__rmssd__avg",
@@ -140,8 +140,8 @@ class GenericAggregator(AggregatorBase):
         "strdur_30_avg": "wb_30__stride_duration_s__avg",
         "ws_30_p90": "wb_30__walking_speed_mps__p90",
         "cadence_30_p90": "wb_30__cadence_spm__p90",
-        "ws_30_var": "wb_30__walking_speed_mps__var",
-        "strlen_30_var": "wb_30__stride_length_m__var",
+        "ws_30_cv": "wb_30__walking_speed_mps__cv",
+        "strlen_30_cv": "wb_30__stride_length_m__cv",
         "cadence_30_wb_cv": "wb_30__cadence_spm__cv__avg",
         "strdur_30_wb_cv": "wb_30__stride_duration_s__cv__avg",
         "ws_30_wb_cv": "wb_30__walking_speed_mps__cv__avg",
@@ -180,11 +180,11 @@ class GenericAggregator(AggregatorBase):
         "wbsteps_all_sum": ("n_raw_initial_contacts", "sum"),
         "wbdur_all_median": ("duration_s", "median"),
         "wbdur_all_p90": ("duration_s", _custom_quantile),
-        "wbdur_all_var": ("duration_s", _coefficient_of_variation),
+        "wbdur_all_cv": ("duration_s", _coefficient_of_variation),
         "cadence_all_avg": ("cadence_spm", "mean"),
         "strdur_all_avg": ("stride_duration_s", "mean"),
-        "cadence_all_var": ("cadence_spm", _coefficient_of_variation),
-        "strdur_all_var": ("stride_duration_s", _coefficient_of_variation),
+        "cadence_all_cv": ("cadence_spm", _coefficient_of_variation),
+        "strdur_all_cv": ("stride_duration_s", _coefficient_of_variation),
         "cadence_all_wb_cv": ("cadence_spm_cv", "mean"),
         "strdur_all_wb_cv": ("stride_duration_s_cv", "mean"),
         "cadence_all_wb_rmssd": ("cadence_spm_rmssd", "mean"),
@@ -215,8 +215,8 @@ class GenericAggregator(AggregatorBase):
         "strdur_30_avg": ("stride_duration_s", "mean"),
         "ws_30_p90": ("walking_speed_mps", _custom_quantile),
         "cadence_30_p90": ("cadence_spm", _custom_quantile),
-        "ws_30_var": ("walking_speed_mps", _coefficient_of_variation),
-        "strlen_30_var": ("stride_length_m", _coefficient_of_variation),
+        "ws_30_cv": ("walking_speed_mps", _coefficient_of_variation),
+        "strlen_30_cv": ("stride_length_m", _coefficient_of_variation),
         "cadence_30_wb_cv": ("cadence_spm_cv", "mean"),
         "strdur_30_wb_cv": ("stride_duration_s_cv", "mean"),
         "ws_30_wb_cv": ("walking_speed_mps_cv", "mean"),

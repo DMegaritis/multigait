@@ -113,7 +113,7 @@ class GenericAggregator(AggregatorBase):
     ALTERNATIVE_NAMES: typing.ClassVar[dict[str, str]] = {
         "wb_all_sum": "wb_all__count",
         "walkdur_all_sum": "total_walking_duration_min",
-        "wbdur_all_avg": "wb_all__duration_s__avg",
+        "wbdur_all_median": "wb_all__duration_s__mean",
         "wbdur_all_p90": "wb_all__duration_s__p90",
         "wbdur_all_var": "wb_all__duration_s__var",
         "cadence_all_avg": "wb_all__cadence_spm__avg",
@@ -178,7 +178,7 @@ class GenericAggregator(AggregatorBase):
         "wb_all_sum": ("duration_s", "count"),
         "walkdur_all_sum": ("duration_s", "sum"),
         "wbsteps_all_sum": ("n_raw_initial_contacts", "sum"),
-        "wbdur_all_avg": ("duration_s", "median"),
+        "wbdur_all_median": ("duration_s", "median"),
         "wbdur_all_p90": ("duration_s", _custom_quantile),
         "wbdur_all_var": ("duration_s", _coefficient_of_variation),
         "cadence_all_avg": ("cadence_spm", "mean"),

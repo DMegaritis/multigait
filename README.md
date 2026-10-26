@@ -95,7 +95,7 @@ The following table summarizes all Digital Mobility Outcomes (DMOs) extracted by
 | All WBs        | Number of walking bouts                           | Sum             |
 | All WBs        | Total Walking Duration (min)                      | Sum             |
 | All WBs        | Initial Contacts (n_raw)                          | Sum             |
-| All WBs        | WB Duration (s)                                   | Mean            |
+| All WBs        | WB Duration (s)                                   | Median            |
 | All WBs        | Max WB Duration (s)                               | 90th percentile |
 | All WBs        | WB Duration bout to bout variability (s)         | CV              |
 | All WBs        | Cadence (steps/min)                               | Mean            |

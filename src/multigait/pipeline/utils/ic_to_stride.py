@@ -5,12 +5,13 @@ def _to_stride_list_no_lr(ic_list: pd.DataFrame) -> pd.DataFrame:
     """Make start/end stride rows from an ic-only DataFrame.
 
     Expects a DataFrame with column "ic". Returns rows where start=ic and
-    end=next ic (last row is dropped).
+    end=the IC two positions later, i.e. the next IC of the same foot, assuming
+    contacts alternate between feet. The last two rows are dropped.
     """
     return (
         ic_list[["ic"]]
         .rename(columns={"ic": "start"})
-        .assign(end=lambda df_: df_["start"].shift(-1))
+        .assign(end=lambda df_: df_["start"].shift(-2))
         .dropna()
         .astype({"start": "int64", "end": "int64"})
     )
@@ -30,7 +31,10 @@ def _unify_stride_list_no_lr(df: pd.DataFrame) -> pd.DataFrame:
 def strides_list_from_ic_list_no_lrc(ic_list: pd.DataFrame) -> pd.DataFrame:
     """Convert an initial contact list (no laterality) to a stride list.
 
-    Each stride goes from one IC to the next IC (consecutive ICs).
+    Each stride goes from one IC to the IC two positions later (a full gait
+    cycle), assuming contacts alternate between feet. Without left/right labels
+    this alternation cannot be checked, so a missed or extra contact shifts the
+    pairing. Strides overlap, as in the left/right version.
     The function preserves the input index structure (so it works when applied
     via groupby on gs_id).
     """

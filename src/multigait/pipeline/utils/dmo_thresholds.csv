@@ -1,6 +1,6 @@
 dmo,min,max
 cadence_spm,30,180
-walking_speed_mps,0.4,1.9
-stride_length_m,0.3,2
-stride_duration_s,0.3,1.7
-step_duration_s,0.1,1.2
+walking_speed_mps,0.1,2.2
+stride_length_m,0.15,2.1
+stride_duration_s,0.3,3.0
+step_duration_s,0.1,2.1

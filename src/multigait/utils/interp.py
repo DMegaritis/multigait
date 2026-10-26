@@ -132,6 +132,10 @@ def map_seconds_to_regions(
     Uses cumulative integration of second-level values and linear interpolation
     to obtain region-wise averages, independent of region alignment to the second grid.
 
+    NaN seconds are ignored: the value of a region is the time-weighted mean over
+    the valid (non-NaN) part of the region. A NaN second therefore only affects the
+    regions that overlap it. A region without any valid time is NaN.
+
     Parameters
     ----------
     regions : DataFrame
@@ -175,20 +179,34 @@ def map_seconds_to_regions(
     # Left padding to ensure interpolation validity
     pad_val = shifted_positions[0] - sampling_rate_hz
     padded_positions = np.concatenate(([pad_val], shifted_positions))
-    padded_values = np.vstack((values[0], values))
 
-    cumulative = np.cumsum(padded_values, axis=0) * sampling_rate_hz
-    interpolation_fn = interp1d(
-        padded_positions, cumulative, axis=0, fill_value="extrapolate"
-    )
+    # NaN seconds add nothing to either running total, so they cannot spread:
+    #  - cum_val: running total of the values (valid seconds only)
+    #  - cum_dur: running total of the valid time (in samples)
+    valid = ~np.isnan(values)
+    filled = np.where(valid, values, 0.0)
+    padded_filled = np.vstack((filled[0], filled))
+    padded_valid = np.vstack((valid[0], valid)).astype(float)
+
+    cum_val = np.cumsum(padded_filled, axis=0) * sampling_rate_hz
+    cum_dur = np.cumsum(padded_valid, axis=0) * sampling_rate_hz
+    val_fn = interp1d(padded_positions, cum_val, axis=0, fill_value="extrapolate")
+    dur_fn = interp1d(padded_positions, cum_dur, axis=0, fill_value="extrapolate")
 
     starts = regions["start"].to_numpy()
     ends = regions["end"].to_numpy()
     stacked = np.vstack((starts, ends))
-    integrated = interpolation_fn(stacked)
+    integrated_val = val_fn(stacked)
+    integrated_dur = dur_fn(stacked)
 
-    durations = (ends - starts)[:, None]
-    means = (integrated[1] - integrated[0]) / durations
+    # Mean over the valid time of each region; NaN if the region has no valid time
+    valid_duration = integrated_dur[1] - integrated_dur[0]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        means = np.where(
+            valid_duration > 1e-6,
+            (integrated_val[1] - integrated_val[0]) / valid_duration,
+            np.nan,
+        )
 
     out = pd.DataFrame(
         means, columns=second_params.columns, index=regions.index

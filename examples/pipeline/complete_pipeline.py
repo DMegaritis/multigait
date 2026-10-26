@@ -69,7 +69,7 @@ pipeline.per_wb_parameters_
 pipeline.aggregated_parameters_
 
 # %%
-# Running the preliminary suggested pipeline separately.
+# Running the suggested pipeline for older adults with multiple long-term conditions.
 # For this, we do not need to specify the algorithms to be used.
 
 from multigait.pipeline import (
